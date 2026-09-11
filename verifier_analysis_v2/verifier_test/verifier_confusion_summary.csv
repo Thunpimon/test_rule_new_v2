@@ -1,0 +1,12 @@
+﻿true_class,cnn_class,count,is_cnn_error,percentage_of_cnn_errors,verdict,verdict_count
+01_Good,02_Out_of_Focus,5,True,41.666666666666664,AMBIGUOUS,5
+01_Good,05_No_Star,2,True,16.666666666666668,OUT_OF_SCOPE,2
+03_Tracking_Error,01_Good,2,True,16.666666666666668,AMBIGUOUS,2
+03_Tracking_Error,02_Out_of_Focus,2,True,16.666666666666668,AMBIGUOUS,2
+02_Out_of_Focus,04_Over_Saturated,1,True,8.333333333333334,OUT_OF_SCOPE,1
+02_Out_of_Focus,02_Out_of_Focus,49,False,0.0,AMBIGUOUS,46
+02_Out_of_Focus,02_Out_of_Focus,49,False,0.0,WEAK,3
+03_Tracking_Error,03_Tracking_Error,46,False,0.0,AMBIGUOUS,23
+03_Tracking_Error,03_Tracking_Error,46,False,0.0,SUPPORTED,1
+03_Tracking_Error,03_Tracking_Error,46,False,0.0,WEAK,22
+01_Good,01_Good,43,False,0.0,AMBIGUOUS,43

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astro Image Quality Lab</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+    <main class="app-shell">
+        <section class="topbar" aria-label="System overview">
+            <div>
+                <p class="eyebrow">ONNX browser inference</p>
+                <h1>Astro Image Quality Lab</h1>
+                <p class="subtitle">Upload multiple astronomy images, run the trained ONNX model directly in the browser, review Top-6 class probabilities, and summarize image quality across the current test batch.</p>
+            </div>
+            <div class="topbar-actions">
+                <div class="model-chip" id="modelStatus">Preparing model</div>
+                <span class="class-count-chip">6 quality classes</span>
+            </div>
+        </section>
+
+        <section class="metrics-grid" aria-label="Test summary">
+            <article class="metric">
+                <span>Total images</span>
+                <strong id="totalImages">0</strong>
+            </article>
+            <article class="metric">
+                <span>Average confidence</span>
+                <strong id="avgConfidence">-</strong>
+            </article>
+            <article class="metric">
+                <span>Average inference time</span>
+                <strong id="avgLatency">-</strong>
+            </article>
+            <article class="metric">
+                <span>Most predicted class</span>
+                <strong id="dominantClass">-</strong>
+            </article>
+        </section>
+
+        <section class="workspace">
+            <aside class="upload-panel" aria-label="Upload images">
+                <label class="drop-zone" id="dropZone" for="upload">
+                    <input type="file" id="upload" accept="image/*" multiple>
+                    <span class="drop-icon" aria-hidden="true">+</span>
+                    <strong>Select or drop images</strong>
+                    <small>Supports JPG, PNG, WebP, and multi-file upload</small>
+                </label>
+
+                <div class="controls">
+                    <button id="runButton" class="primary-action" type="button" disabled>Run prediction</button>
+                    <button id="exportButton" class="secondary" type="button" disabled>Download .zip</button>
+                    <button id="clearButton" class="ghost" type="button" disabled>Clear all</button>
+                </div>
+
+                <div class="class-summary">
+                    <div class="section-title">
+                        <h2>Class distribution</h2>
+                        <span id="processedCount">0 processed</span>
+                    </div>
+                    <div id="classDistribution" class="distribution empty">No predictions yet</div>
+                </div>
+
+                <div class="class-guide" aria-label="Six class details">
+                    <div class="section-title">
+                        <h2>6-class quality groups</h2>
+                    </div>
+                    <ul>
+                        <li><span>Good</span><small>Usable image quality</small></li>
+                        <li><span>Out of Focus</span><small>Blurred star profile</small></li>
+                        <li><span>Tracking Error</span><small>Stars appear stretched</small></li>
+                        <li><span>Over Saturated</span><small>Highlights are clipped</small></li>
+                        <li><span>No Star</span><small>No usable star signal</small></li>
+                        <li><span>Satellite</span><small>Satellite trail detected</small></li>
+                    </ul>
+                </div>
+            </aside>
+
+            <section class="results-panel" aria-label="Prediction results">
+                <div class="section-title">
+                    <h2>Prediction Results</h2>
+                    <span id="queueStatus">No images</span>
+                </div>
+                <div class="filter-panel" aria-label="Prediction filters">
+                    <div class="filter-heading">
+                        <span>Filter results</span>
+                        <strong id="filteredCount">0 shown</strong>
+                    </div>
+                    <label class="sort-control" for="sortSelect">
+                        <span>Sort by</span>
+                        <select id="sortSelect">
+                            <option value="upload">Upload order</option>
+                            <option value="confidence-asc">Confidence: low to high</option>
+                        </select>
+                    </label>
+                    <div class="filter-chips" id="filterChips">
+                        <button class="filter-chip active" type="button" data-filter-type="all" data-filter-value="all">All <span>0</span></button>
+                        <button class="filter-chip warning" type="button" data-filter-type="low" data-filter-value="low">Low confidence &lt; 60% <span>0</span></button>
+                    </div>
+                </div>
+                <div id="resultsGrid" class="results-grid empty-state">
+                    <p>Upload images to classify them into 6 quality groups</p>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <div class="image-modal" id="imageModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <h2 id="modalTitle">Image preview</h2>
+                <button class="icon-button" id="modalCloseButton" type="button" aria-label="Close preview">x</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-image-frame">
+                    <button class="modal-nav-button prev" id="modalPrevButton" type="button" aria-label="Previous image">‹</button>
+                    <img id="modalImage" alt="">
+                    <button class="modal-nav-button next" id="modalNextButton" type="button" aria-label="Next image">›</button>
+                </div>
+                <aside class="modal-prediction" aria-label="Top 6 prediction details">
+                    <div>
+                        <span class="modal-label">Top prediction</span>
+                        <strong id="modalTopClass">-</strong>
+                        <span id="modalTopConfidence">-</span>
+                    </div>
+                    <div class="modal-meta" id="modalMeta">-</div>
+                    <div class="modal-rank-list" id="modalRankList">
+                        <p>Run prediction to see all 6 class probabilities.</p>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <template id="resultCardTemplate">
+        <article class="result-card">
+            <button class="thumb-wrap" type="button" aria-label="Open full image preview">
+                <img class="thumb" alt="">
+            </button>
+            <button class="remove-card-button" type="button" aria-label="Remove this image">x</button>
+            <div class="card-body">
+                <div class="card-heading">
+                    <h3 class="file-name"></h3>
+                    <span class="status-pill">Queued</span>
+                </div>
+                <div class="prediction-main">
+                    <span class="label">Top quality group</span>
+                    <strong class="top-class">-</strong>
+                    <span class="top-confidence">-</span>
+                    <span class="rule-summary">Rule check pending</span>
+                    <span class="confidence-flag">Low confidence</span>
+                </div>
+                <div class="meta-row">
+                    <span class="latency">-</span>
+                    <span class="dimensions">-</span>
+                    <span class="size">-</span>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+</html>

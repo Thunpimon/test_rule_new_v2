@@ -91,7 +91,7 @@ def import_classifier(classifier_dir: Path):
     sys.path.insert(0, str(classifier_dir))
 
     try:
-        from astro_rule_classifier_new import (
+        from astro_rule_classifier_new_GoodV2 import (
             CLASS_NAMES,
             extract_features,
             read_gray_image,

@@ -1,0 +1,14 @@
+﻿filename,ground_truth,predicted_rule,rule_top_score_pct,cnn_predicted,cnn_confidence_pct,hybrid_note,subfolder
+G_260511366T_1_2.png,01_Good,04_Over_Saturated,100.0,01_Good,89.63,,GT_01_Good__Pred_04_Over_Saturated
+G_260525LL0G_1_12.png,01_Good,03_Tracking_Error,74.21,01_Good,88.37,,GT_01_Good__Pred_03_Tracking_Error
+G_260528MX8S_1_2.png,01_Good,02_Out_of_Focus,43.04,01_Good,84.49,,GT_01_Good__Pred_02_Out_of_Focus
+NS_260513XFVK_1.png,05_No_Star,01_Good,62.41,05_No_Star,83.2,,GT_05_No_Star__Pred_01_Good
+NS_260513XFVK_2.png,05_No_Star,01_Good,67.89,05_No_Star,86.77,,GT_05_No_Star__Pred_01_Good
+NS_260513XFVK_3.png,05_No_Star,01_Good,80.07,05_No_Star,84.74,,GT_05_No_Star__Pred_01_Good
+OOF_FILE_CURRENT_FOCUS12758 (2).png,02_Out_of_Focus,03_Tracking_Error,84.29,02_Out_of_Focus,88.98,,GT_02_Out_of_Focus__Pred_03_Tracking_Error
+OOF_FILE_CURRENT_FOCUS12758 (5).png,02_Out_of_Focus,03_Tracking_Error,92.97,02_Out_of_Focus,91.71,,GT_02_Out_of_Focus__Pred_03_Tracking_Error
+OOF_FILE_CURRENT_FOCUS14158 (56).png,02_Out_of_Focus,01_Good,10.0,01_Good,76.64,,GT_02_Out_of_Focus__Pred_01_Good
+OOF_TE_FILE_CURRENT_FOCUS14158 (2).png,02_Out_of_Focus,03_Tracking_Error,98.69,03_Tracking_Error,73.34,Hybrid (OOF + TE),GT_02_Out_of_Focus__Pred_03_Tracking_Error
+ST_260515NV5F_1_6.png,06_Satellite,01_Good,59.33,06_Satellite,91.81,,GT_06_Satellite__Pred_01_Good
+TE_260520XBLU_1_1.png,03_Tracking_Error,01_Good,73.03,03_Tracking_Error,99.74,,GT_03_Tracking_Error__Pred_01_Good
+TE_ST_260523AB0J_14.png,03_Tracking_Error,06_Satellite,88.0,03_Tracking_Error,99.7,Hybrid (TE + ST),GT_03_Tracking_Error__Pred_06_Satellite

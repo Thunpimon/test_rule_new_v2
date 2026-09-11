@@ -1,0 +1,51 @@
+﻿image_name,true_class,cnn_predicted_class,cnn_confidence_pct,filter_top_class,filter_top_score_pct,is_matched,agreement_status,score_01_Good_pct,passed_01_Good,score_02_Out_of_Focus_pct,passed_02_Out_of_Focus,score_03_Tracking_Error_pct,passed_03_Tracking_Error,score_04_Over_Saturated_pct,passed_04_Over_Saturated,score_05_No_Star_pct,passed_05_No_Star,score_06_Satellite_pct,passed_06_Satellite
+2606063H5R_1_2.png,02_Out_of_Focus,02_Out_of_Focus,88.19,01_Good,65.92,False,MISMATCH,65.92,True,45.56,False,1.8,False,5.26,False,0.2,False,22.43,False
+2606065NHT_1_2 (2).png,02_Out_of_Focus,02_Out_of_Focus,87.89,02_Out_of_Focus,66.55,True,STRONG_MATCH,31.66,False,66.55,True,0.0,False,4.63,False,0.0,False,22.58,False
+260606CXCN_1_2.png,02_Out_of_Focus,02_Out_of_Focus,89.49,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,5.03,False,86.89,True,22.47,False
+260606JD06_1_2.png,02_Out_of_Focus,02_Out_of_Focus,91.93,02_Out_of_Focus,69.62,True,STRONG_MATCH,35.41,False,69.62,True,0.0,False,4.15,False,0.0,False,24.52,False
+260606L395_1_2.png,02_Out_of_Focus,02_Out_of_Focus,90.02,01_Good,52.82,False,MISMATCH,52.82,True,51.26,True,1.47,False,0.0,False,0.0,False,22.58,False
+260606OYH0_1_1.png,02_Out_of_Focus,02_Out_of_Focus,95.28,01_Good,74.72,False,MISMATCH,74.72,True,2.0,False,5.0,False,6.7,False,23.38,False,22.17,False
+260606WEOA_1_2.png,02_Out_of_Focus,02_Out_of_Focus,93.37,01_Good,56.71,False,MISMATCH,56.71,True,33.76,False,0.0,False,5.66,False,16.39,False,22.36,False
+260606YTIR_1_1.png,02_Out_of_Focus,02_Out_of_Focus,93.5,01_Good,62.76,False,MISMATCH,62.76,True,23.65,False,15.41,False,6.17,False,5.74,False,22.27,False
+260606Z6Z9_1_1.png,02_Out_of_Focus,02_Out_of_Focus,93.28,01_Good,45.96,False,MISMATCH,45.96,False,45.3,False,4.0,False,0.0,False,0.0,False,22.58,False
+260606Z6Z9_1_2 (2).png,02_Out_of_Focus,02_Out_of_Focus,94.1,02_Out_of_Focus,70.11,True,STRONG_MATCH,31.72,False,70.11,True,8.01,False,5.06,False,0.0,False,22.58,False
+260614WALM_15_1.png,02_Out_of_Focus,02_Out_of_Focus,96.3,01_Good,58.94,False,MISMATCH,58.94,True,28.86,False,14.48,False,45.19,False,0.0,False,9.68,False
+260614WALM_3_1.png,02_Out_of_Focus,02_Out_of_Focus,95.7,01_Good,53.61,False,MISMATCH,53.61,True,30.5,False,34.68,False,44.76,False,0.0,False,9.68,False
+260614WALM_8_1.png,02_Out_of_Focus,02_Out_of_Focus,96.27,01_Good,58.68,False,MISMATCH,58.68,True,30.49,False,0.0,False,41.46,False,0.0,False,12.58,False
+260619J169_11.png,02_Out_of_Focus,02_Out_of_Focus,92.39,03_Tracking_Error,49.22,False,MISMATCH,18.0,False,6.86,False,49.22,False,34.75,False,0.0,False,15.15,False
+260619J169_34.png,02_Out_of_Focus,02_Out_of_Focus,92.51,03_Tracking_Error,48.28,False,MISMATCH,16.83,False,7.98,False,48.28,False,29.21,False,0.0,False,22.58,False
+260619J169_47.png,02_Out_of_Focus,02_Out_of_Focus,96.61,03_Tracking_Error,53.19,False,MISMATCH,17.63,False,7.33,False,53.19,True,39.12,False,0.0,False,9.95,False
+260619J169_78.png,02_Out_of_Focus,02_Out_of_Focus,83.63,03_Tracking_Error,44.89,False,MISMATCH,19.28,False,6.78,False,44.89,False,25.88,False,0.0,False,22.58,False
+2606222JG3_1_1.png,02_Out_of_Focus,02_Out_of_Focus,85.28,03_Tracking_Error,42.84,False,MISMATCH,8.77,False,15.33,False,42.84,False,18.57,False,0.0,False,22.58,False
+2606227JDP_1_2.png,02_Out_of_Focus,04_Over_Saturated,64.99,03_Tracking_Error,50.28,False,MISMATCH,9.55,False,13.27,False,50.28,True,25.95,False,0.0,False,35.96,False
+260622AD3U_5.png,02_Out_of_Focus,02_Out_of_Focus,90.93,01_Good,82.34,False,MISMATCH,82.34,True,23.93,False,5.0,False,7.73,False,16.35,False,21.98,False
+260622DI0V_1_2.png,02_Out_of_Focus,02_Out_of_Focus,83.84,01_Good,52.93,False,MISMATCH,52.93,True,46.3,False,13.59,False,0.0,False,0.0,False,22.58,False
+260623CZEM_1_2.png,02_Out_of_Focus,02_Out_of_Focus,86.18,01_Good,60.0,False,MISMATCH,60.0,True,26.38,False,0.0,False,6.64,False,5.01,False,22.18,False
+2607027VZF_1062.png,02_Out_of_Focus,02_Out_of_Focus,92.0,01_Good,85.49,False,MISMATCH,85.49,True,22.44,False,0.0,False,4.96,False,4.52,False,22.49,False
+2607027VZF_1867.png,02_Out_of_Focus,02_Out_of_Focus,93.26,01_Good,67.14,False,MISMATCH,67.14,True,12.61,False,0.0,False,6.99,False,5.74,False,22.22,False
+2607027VZF_2096.png,02_Out_of_Focus,02_Out_of_Focus,98.32,01_Good,73.92,False,MISMATCH,73.92,True,14.89,False,0.0,False,5.08,False,5.74,False,22.47,False
+2607027VZF_2105.png,02_Out_of_Focus,02_Out_of_Focus,96.66,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,6.96,False,86.89,True,22.12,False
+2607027VZF_2115.png,02_Out_of_Focus,02_Out_of_Focus,96.96,01_Good,77.4,False,MISMATCH,77.4,True,17.39,False,5.0,False,5.25,False,5.74,False,22.43,False
+2607027VZF_2116.png,02_Out_of_Focus,02_Out_of_Focus,90.18,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,0.0,False,86.89,True,22.58,False
+2607027VZF_2117.png,02_Out_of_Focus,02_Out_of_Focus,96.73,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,6.44,False,86.89,True,22.22,False
+2607027VZF_2126.png,02_Out_of_Focus,02_Out_of_Focus,96.71,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,0.0,False,86.89,True,22.58,False
+2607027VZF_2127.png,02_Out_of_Focus,02_Out_of_Focus,98.03,01_Good,82.44,False,MISMATCH,82.44,True,2.0,False,5.0,False,5.76,False,23.38,False,22.82,False
+2607027VZF_2129.png,02_Out_of_Focus,02_Out_of_Focus,94.96,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,6.67,False,86.89,True,22.18,False
+2607027VZF_2175.png,02_Out_of_Focus,02_Out_of_Focus,93.52,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,0.0,False,86.89,True,22.58,False
+2607027VZF_2176.png,02_Out_of_Focus,02_Out_of_Focus,98.0,01_Good,85.86,False,MISMATCH,85.86,True,2.0,False,5.0,False,4.68,False,23.38,False,22.54,False
+2607027VZF_2364.png,02_Out_of_Focus,02_Out_of_Focus,96.92,01_Good,64.28,False,MISMATCH,64.28,True,34.39,False,5.0,False,4.93,False,5.74,False,22.49,False
+2607027VZF_2371.png,02_Out_of_Focus,02_Out_of_Focus,96.34,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,4.81,False,86.89,True,25.83,False
+260704R43Z_1_2.png,02_Out_of_Focus,02_Out_of_Focus,97.32,01_Good,78.0,False,MISMATCH,78.0,True,13.98,False,0.0,False,0.0,False,5.74,False,23.87,False
+260704RBZH_1_1.png,02_Out_of_Focus,02_Out_of_Focus,94.15,05_No_Star,86.89,False,MISMATCH,5.0,False,2.0,False,5.0,False,5.16,False,86.89,True,22.45,False
+FILE_CURRENT_FOCUS12058 (22).png,02_Out_of_Focus,02_Out_of_Focus,96.73,02_Out_of_Focus,52.75,True,STRONG_MATCH,11.44,False,52.75,True,34.06,False,14.17,False,0.14,False,9.68,False
+FILE_CURRENT_FOCUS12058 (24).png,02_Out_of_Focus,02_Out_of_Focus,95.26,02_Out_of_Focus,62.92,True,STRONG_MATCH,35.98,False,62.92,True,0.0,False,11.52,False,0.0,False,10.03,False
+FILE_CURRENT_FOCUS12058 (36).png,02_Out_of_Focus,02_Out_of_Focus,97.5,02_Out_of_Focus,57.39,True,STRONG_MATCH,8.1,False,57.39,True,29.2,False,12.37,False,0.0,False,9.68,False
+FILE_CURRENT_FOCUS12058 (37).png,02_Out_of_Focus,02_Out_of_Focus,97.69,02_Out_of_Focus,51.7,True,STRONG_MATCH,26.18,False,51.7,True,14.41,False,9.99,False,0.0,False,22.58,False
+FILE_CURRENT_FOCUS12058 (61).png,02_Out_of_Focus,02_Out_of_Focus,85.98,02_Out_of_Focus,47.9,True,WEAK_MATCH,17.38,False,47.9,False,0.0,False,14.55,False,0.29,False,9.68,False
+FILE_CURRENT_FOCUS12058 (62).png,02_Out_of_Focus,02_Out_of_Focus,85.98,02_Out_of_Focus,47.9,True,WEAK_MATCH,17.38,False,47.9,False,0.0,False,14.55,False,0.29,False,9.68,False
+FILE_CURRENT_FOCUS12058 (7).png,02_Out_of_Focus,02_Out_of_Focus,97.21,02_Out_of_Focus,44.68,True,WEAK_MATCH,25.62,False,44.68,False,10.89,False,13.13,False,0.0,False,9.68,False
+FILE_CURRENT_FOCUS12058 (8).png,02_Out_of_Focus,02_Out_of_Focus,96.49,01_Good,43.63,False,MISMATCH,43.63,False,43.01,False,2.39,False,14.55,False,0.0,False,9.68,False
+FILE_CURRENT_FOCUS12058 (9).png,02_Out_of_Focus,02_Out_of_Focus,95.42,02_Out_of_Focus,49.74,True,WEAK_MATCH,16.16,False,49.74,False,27.11,False,14.55,False,0.0,False,9.68,False
+FILE_CURRENT_FOCUS12408 (13).png,02_Out_of_Focus,02_Out_of_Focus,93.89,02_Out_of_Focus,58.17,True,STRONG_MATCH,29.59,False,58.17,True,1.24,False,11.91,False,0.0,False,9.68,False
+FILE_CURRENT_FOCUS12408 (14).png,02_Out_of_Focus,02_Out_of_Focus,97.0,02_Out_of_Focus,47.37,True,WEAK_MATCH,12.25,False,47.37,False,28.43,False,12.62,False,0.0,False,9.68,False
+FILE_CURRENT_FOCUS12408 (42).png,02_Out_of_Focus,02_Out_of_Focus,94.58,03_Tracking_Error,59.21,False,MISMATCH,8.25,False,49.04,False,59.21,True,11.94,False,0.0,False,12.76,False

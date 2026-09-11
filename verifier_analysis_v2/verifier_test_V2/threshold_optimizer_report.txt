@@ -1,0 +1,50 @@
+======================================================================
+THRESHOLD OPTIMIZER REPORT
+======================================================================
+
+Dataset
+  Total rows              : 147
+  Labeled target rows     : 147
+  CNN in verifier scope  : 147
+  CNN correct             : 138
+
+----------------------------------------------------------------------
+CURRENT THRESHOLDS
+----------------------------------------------------------------------
+  weak_evidence       = 0.40
+  supported_evidence  = 0.60
+  supported_margin    = 0.15
+  ambiguous_margin    = 0.08
+
+Current performance:
+  SUPPORTED           : 1
+  WEAK                : 25
+  AMBIGUOUS           : 121
+  SUPPORTED precision : 1.0000
+  SUPPORTED coverage  : 0.0072
+  False SUPPORTED     : 0
+
+======================================================================
+BEST THRESHOLD CANDIDATE
+======================================================================
+  weak_evidence       = 0.30
+  supported_evidence  = 0.45
+  supported_margin    = 0.04
+  ambiguous_margin    = 0.03
+
+Performance:
+  SUPPORTED           : 45
+  WEAK                : 5
+  AMBIGUOUS           : 97
+  SUPPORTED precision : 1.0000
+  SUPPORTED coverage  : 0.3261
+  False SUPPORTED     : 0
+  False SUPPORTED rate: 0.0000
+  Objective           : 0.681522
+
+======================================================================
+IMPORTANT
+======================================================================
+The optimizer does NOT modify CNN predictions.
+The optimizer does NOT use the existing verdict column as ground truth.
+Thresholds should be validated on a separate validation/test split before being considered final.

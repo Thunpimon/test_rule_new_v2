@@ -1,0 +1,51 @@
+﻿image_name,true_class,cnn_predicted_class,cnn_confidence_pct,filter_top_class,filter_top_score_pct,is_matched,agreement_status,score_01_Good_pct,passed_01_Good,score_02_Out_of_Focus_pct,passed_02_Out_of_Focus,score_03_Tracking_Error_pct,passed_03_Tracking_Error,score_04_Over_Saturated_pct,passed_04_Over_Saturated,score_05_No_Star_pct,passed_05_No_Star,score_06_Satellite_pct,passed_06_Satellite
+2605045QHM_1_2.png,04_Over_Saturated,04_Over_Saturated,89.98,03_Tracking_Error,60.62,False,MISMATCH,3.26,False,0.0,False,60.62,True,10.0,False,2.67,False,0.5,False
+2605082ZGH_1_12.png,04_Over_Saturated,04_Over_Saturated,90.72,04_Over_Saturated,85.0,True,STRONG_MATCH,8.16,False,0.0,False,2.52,False,85.0,True,0.0,False,10.32,False
+2605082ZGH_1_5.png,04_Over_Saturated,04_Over_Saturated,94.25,04_Over_Saturated,85.0,True,STRONG_MATCH,8.44,False,0.0,False,47.13,False,85.0,True,0.0,False,9.68,False
+260511JK92_1_2.png,04_Over_Saturated,04_Over_Saturated,91.25,04_Over_Saturated,100.0,True,STRONG_MATCH,10.21,False,0.0,False,16.85,False,100.0,True,1.29,False,3.35,False
+260515BCA7_11_1.png,04_Over_Saturated,04_Over_Saturated,97.44,04_Over_Saturated,85.0,True,STRONG_MATCH,9.86,False,0.0,False,3.19,False,85.0,True,0.0,False,9.68,False
+260515BCA7_9_1.png,04_Over_Saturated,04_Over_Saturated,91.99,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,34.77,False,100.0,True,0.0,False,9.44,False
+260515ELKI_13_1.png,04_Over_Saturated,04_Over_Saturated,94.93,04_Over_Saturated,85.0,True,STRONG_MATCH,9.27,False,0.0,False,22.16,False,85.0,True,0.0,False,9.68,False
+260515ELKI_6_1.png,04_Over_Saturated,04_Over_Saturated,97.03,04_Over_Saturated,85.0,True,STRONG_MATCH,9.86,False,0.0,False,3.61,False,85.0,True,0.0,False,9.68,False
+260515ELKI_8_1.png,04_Over_Saturated,04_Over_Saturated,97.57,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,3.82,False,100.0,True,0.0,False,9.44,False
+260515EVU6_16_1.png,04_Over_Saturated,04_Over_Saturated,97.75,04_Over_Saturated,85.0,True,STRONG_MATCH,9.3,False,0.0,False,4.61,False,85.0,True,0.0,False,13.72,False
+260515EVU6_17_1.png,04_Over_Saturated,04_Over_Saturated,97.36,04_Over_Saturated,85.0,True,STRONG_MATCH,9.89,False,0.0,False,3.3,False,85.0,True,0.0,False,9.68,False
+260515EVU6_2_1.png,04_Over_Saturated,04_Over_Saturated,91.77,04_Over_Saturated,85.0,True,STRONG_MATCH,7.97,False,0.0,False,3.05,False,85.0,True,0.0,False,9.68,False
+260515EVU6_6_1.png,04_Over_Saturated,04_Over_Saturated,95.2,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,22.08,False,100.0,True,0.0,False,9.44,False
+260515GFRS_9_1.png,04_Over_Saturated,04_Over_Saturated,87.22,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,4.94,False,100.0,True,0.0,False,9.44,False
+260515IC2A_1_2.png,04_Over_Saturated,04_Over_Saturated,87.02,04_Over_Saturated,90.0,True,STRONG_MATCH,2.51,False,26.79,False,72.38,True,90.0,True,10.85,False,0.51,False
+260515P2R1_15_1.png,04_Over_Saturated,04_Over_Saturated,97.77,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,1.19,False,5.0,False,100.0,True,0.0,False,9.35,False
+260515P2R1_17_1.png,04_Over_Saturated,04_Over_Saturated,97.2,04_Over_Saturated,85.0,True,STRONG_MATCH,9.2,False,0.0,False,4.32,False,85.0,True,0.0,False,9.68,False
+260515P2R1_1_1.png,04_Over_Saturated,04_Over_Saturated,96.39,04_Over_Saturated,85.0,True,STRONG_MATCH,9.31,False,0.0,False,23.17,False,85.0,True,0.0,False,9.68,False
+260515QBWE_15_1.png,04_Over_Saturated,04_Over_Saturated,96.62,04_Over_Saturated,85.0,True,STRONG_MATCH,9.57,False,0.0,False,3.7,False,85.0,True,0.0,False,9.68,False
+260515QBWE_16_1.png,04_Over_Saturated,04_Over_Saturated,96.37,04_Over_Saturated,85.0,True,STRONG_MATCH,9.76,False,0.0,False,3.26,False,85.0,True,0.0,False,9.68,False
+260515QBWE_1_1.png,04_Over_Saturated,04_Over_Saturated,95.68,04_Over_Saturated,85.0,True,STRONG_MATCH,9.84,False,0.0,False,19.98,False,85.0,True,0.0,False,9.68,False
+260515QBWE_3_1.png,04_Over_Saturated,04_Over_Saturated,93.86,04_Over_Saturated,85.0,True,STRONG_MATCH,9.89,False,0.0,False,25.75,False,85.0,True,0.0,False,9.68,False
+260515QBWE_7_1.png,04_Over_Saturated,04_Over_Saturated,94.93,04_Over_Saturated,85.0,True,STRONG_MATCH,9.64,False,0.0,False,25.79,False,85.0,True,0.0,False,12.9,False
+260515QBWE_9_1.png,04_Over_Saturated,04_Over_Saturated,96.73,04_Over_Saturated,85.0,True,STRONG_MATCH,8.79,False,0.0,False,3.56,False,85.0,True,0.0,False,10.97,False
+260515SYWS_11_1.png,04_Over_Saturated,04_Over_Saturated,92.36,04_Over_Saturated,85.0,True,STRONG_MATCH,9.58,False,0.0,False,3.55,False,85.0,True,0.0,False,9.68,False
+260515U1R3_10_1.png,04_Over_Saturated,04_Over_Saturated,70.73,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,4.51,False,100.0,True,0.0,False,9.52,False
+260515UVGY_6_1.png,04_Over_Saturated,04_Over_Saturated,98.74,04_Over_Saturated,100.0,True,STRONG_MATCH,0.54,False,0.0,False,4.83,False,100.0,True,0.0,False,7.05,False
+2605163NVR_1_1.png,04_Over_Saturated,04_Over_Saturated,56.67,04_Over_Saturated,100.0,True,STRONG_MATCH,10.0,False,63.41,True,5.0,False,100.0,True,1.66,False,0.81,False
+260519OWU3_1_2.png,04_Over_Saturated,04_Over_Saturated,54.51,04_Over_Saturated,90.0,True,STRONG_MATCH,2.19,False,0.0,False,79.05,True,90.0,True,1.05,False,0.51,False
+260523C52A_1_2.png,04_Over_Saturated,04_Over_Saturated,77.43,04_Over_Saturated,90.0,True,STRONG_MATCH,10.66,False,0.0,False,20.78,False,90.0,True,3.79,False,3.36,False
+26061473C1_14_1.png,04_Over_Saturated,04_Over_Saturated,91.26,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,30.95,False,100.0,True,0.0,False,9.44,False
+26061473C1_16_1.png,04_Over_Saturated,04_Over_Saturated,96.6,04_Over_Saturated,85.0,True,STRONG_MATCH,9.74,False,0.0,False,18.87,False,85.0,True,0.0,False,9.68,False
+26061473C1_17_1.png,04_Over_Saturated,04_Over_Saturated,97.17,04_Over_Saturated,85.0,True,STRONG_MATCH,9.45,False,0.0,False,2.92,False,85.0,True,0.0,False,9.68,False
+26061473C1_6_1.png,04_Over_Saturated,04_Over_Saturated,91.3,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,32.3,False,100.0,True,0.0,False,9.9,False
+26061473C1_7_1.png,04_Over_Saturated,04_Over_Saturated,93.63,04_Over_Saturated,85.0,True,STRONG_MATCH,9.33,False,0.0,False,3.14,False,85.0,True,0.0,False,9.68,False
+260614WALM_16_1.png,04_Over_Saturated,04_Over_Saturated,93.0,04_Over_Saturated,100.0,True,STRONG_MATCH,2.47,False,0.0,False,23.14,False,100.0,True,0.0,False,6.26,False
+260627KRXQ_1_2.png,04_Over_Saturated,01_Good,46.44,04_Over_Saturated,90.0,False,MISMATCH,3.37,False,0.0,False,84.29,True,90.0,True,4.44,False,0.5,False
+260702AT87_1_2.png,04_Over_Saturated,04_Over_Saturated,78.98,04_Over_Saturated,100.0,True,STRONG_MATCH,2.69,False,0.0,False,72.38,True,100.0,True,10.14,False,3.39,False
+260709WSBP_1_2.png,04_Over_Saturated,04_Over_Saturated,83.81,04_Over_Saturated,85.0,True,STRONG_MATCH,8.3,False,0.0,False,3.53,False,85.0,True,0.0,False,9.95,False
+2607131ERW_19_1.png,04_Over_Saturated,04_Over_Saturated,91.27,04_Over_Saturated,100.0,True,STRONG_MATCH,0.0,False,0.0,False,4.41,False,100.0,True,0.0,False,10.15,False
+260713EY9C_15_1.png,04_Over_Saturated,04_Over_Saturated,97.84,04_Over_Saturated,90.0,True,STRONG_MATCH,6.79,False,0.0,False,3.32,False,90.0,True,0.0,False,2.41,False
+260713EY9C_3_1.png,04_Over_Saturated,04_Over_Saturated,95.79,04_Over_Saturated,85.0,True,STRONG_MATCH,9.89,False,0.0,False,3.75,False,85.0,True,0.0,False,9.68,False
+FILE_CURRENT_FOCUS13108 (10).png,04_Over_Saturated,04_Over_Saturated,86.94,04_Over_Saturated,85.0,True,STRONG_MATCH,56.63,True,0.0,False,55.46,True,85.0,True,0.0,False,9.68,False
+FILE_CURRENT_FOCUS13108 (22).png,04_Over_Saturated,04_Over_Saturated,43.6,03_Tracking_Error,93.85,False,MISMATCH,10.0,False,15.74,False,93.85,True,5.0,False,0.0,False,1.45,False
+FILE_CURRENT_FOCUS13458 (54).png,04_Over_Saturated,04_Over_Saturated,78.25,04_Over_Saturated,85.0,True,STRONG_MATCH,61.33,True,0.0,False,1.15,False,85.0,True,0.0,False,9.68,False
+FILE_CURRENT_FOCUS13458 (67).png,04_Over_Saturated,04_Over_Saturated,96.35,04_Over_Saturated,85.0,True,STRONG_MATCH,55.32,True,0.0,False,28.84,False,85.0,True,0.0,False,9.68,False
+FILE_CURRENT_FOCUS13458 (72).png,04_Over_Saturated,01_Good,50.66,02_Out_of_Focus,17.46,False,MISMATCH,10.0,False,17.46,False,5.0,False,5.0,False,0.0,False,9.68,False
+FILE_CURRENT_FOCUS13808 (81).png,04_Over_Saturated,01_Good,64.17,02_Out_of_Focus,31.91,False,MISMATCH,10.0,False,31.91,False,5.0,False,5.0,False,0.0,False,1.45,False
+FILE_CURRENT_FOCUS14158 (5).png,04_Over_Saturated,04_Over_Saturated,75.21,03_Tracking_Error,87.22,False,MISMATCH,13.3,False,0.0,False,87.22,True,85.0,True,0.0,False,1.45,False
+FILE_CURRENT_FOCUS14508 (6).png,04_Over_Saturated,04_Over_Saturated,47.94,02_Out_of_Focus,11.0,False,MISMATCH,10.0,False,11.0,False,5.0,False,5.0,False,0.0,False,1.45,False

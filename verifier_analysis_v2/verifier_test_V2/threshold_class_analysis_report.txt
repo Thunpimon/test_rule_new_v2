@@ -1,0 +1,171 @@
+==============================================================================
+THRESHOLD CLASS-WISE ANALYSIS REPORT
+==============================================================================
+
+Purpose:
+Evaluate optimizer threshold candidates separately for 01_Good, 02_Out_of_Focus, and 03_Tracking_Error.
+
+Important:
+- CNN prediction remains authoritative.
+- Verifier does not change cnn_class.
+- Existing verdict column is not used as ground truth.
+- SUPPORTED is considered correct only when CNN class matches true_class.
+
+==============================================================================
+OVERALL CANDIDATE COMPARISON
+==============================================================================
+
+Candidate rank : 1
+Threshold       : weak=0.30, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=5, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 2
+Threshold       : weak=0.32, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=5, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 3
+Threshold       : weak=0.34, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=5, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 4
+Threshold       : weak=0.36, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=5, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 5
+Threshold       : weak=0.38, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=5, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 6
+Threshold       : weak=0.40, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=5, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 7
+Threshold       : weak=0.42, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=5, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 8
+Threshold       : weak=0.44, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=45, WEAK=3, AMBIGUOUS=99
+SUPPORTED       : precision=1.000, coverage=0.326
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 9
+Threshold       : weak=0.30, supported=0.45, supported_margin=0.05, ambiguous_margin=0.03
+Verdicts        : SUPPORTED=44, WEAK=6, AMBIGUOUS=97
+SUPPORTED       : precision=1.000, coverage=0.319
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 10
+Threshold       : weak=0.30, supported=0.45, supported_margin=0.05, ambiguous_margin=0.04
+Verdicts        : SUPPORTED=44, WEAK=2, AMBIGUOUS=101
+SUPPORTED       : precision=1.000, coverage=0.319
+False SUPPORTED : 0 (0.000)
+
+Candidate rank : 0
+Threshold       : weak=0.40, supported=0.60, supported_margin=0.15, ambiguous_margin=0.08
+Verdicts        : SUPPORTED=1, WEAK=25, AMBIGUOUS=121
+SUPPORTED       : precision=1.000, coverage=0.007
+False SUPPORTED : 0 (0.000)
+
+==============================================================================
+CLASS-WISE ANALYSIS
+==============================================================================
+
+Candidate rank 0
+Threshold       : weak=0.40, supported=0.60, supported_margin=0.15, ambiguous_margin=0.08
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED=  0 | WEAK=  3 | AMB= 46 | false_SUP= 0 | precision=N/A | coverage=0.000
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED=  1 | WEAK= 22 | AMB= 27 | false_SUP= 0 | precision=1.000 | coverage=0.022
+
+Candidate rank 1
+Threshold       : weak=0.30, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  4 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 2
+Threshold       : weak=0.32, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  4 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 3
+Threshold       : weak=0.34, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  4 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 4
+Threshold       : weak=0.36, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  4 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 5
+Threshold       : weak=0.38, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  4 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 6
+Threshold       : weak=0.40, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  4 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 7
+Threshold       : weak=0.42, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  4 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 8
+Threshold       : weak=0.44, supported=0.45, supported_margin=0.04, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 28 | WEAK=  2 | AMB= 20 | false_SUP= 0 | precision=1.000 | coverage=0.609
+
+Candidate rank 9
+Threshold       : weak=0.30, supported=0.45, supported_margin=0.05, ambiguous_margin=0.03
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  1 | AMB= 31 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 27 | WEAK=  5 | AMB= 18 | false_SUP= 0 | precision=1.000 | coverage=0.587
+
+Candidate rank 10
+Threshold       : weak=0.30, supported=0.45, supported_margin=0.05, ambiguous_margin=0.04
+  01_Good              total= 48 | CNN_correct= 43 | SUPPORTED=  0 | WEAK=  0 | AMB= 48 | false_SUP= 0 | precision=N/A | coverage=0.000
+  02_Out_of_Focus      total= 49 | CNN_correct= 49 | SUPPORTED= 17 | WEAK=  0 | AMB= 32 | false_SUP= 0 | precision=1.000 | coverage=0.347
+  03_Tracking_Error    total= 50 | CNN_correct= 46 | SUPPORTED= 27 | WEAK=  2 | AMB= 21 | false_SUP= 0 | precision=1.000 | coverage=0.587
+
+==============================================================================
+INTERPRETATION
+==============================================================================
+
+Best zero-false-SUPPORTED candidate by coverage:
+  rank               = 1
+  weak_evidence      = 0.30
+  supported_evidence = 0.45
+  supported_margin   = 0.04
+  ambiguous_margin   = 0.03
+  supported          = 45
+  coverage           = 0.326
+NOTE: This is still evaluated on the same dataset used by the optimizer and should not be treated as a final unbiased validation.
+
+Recommended next step:
+Inspect class-wise results before changing the production verifier thresholds.
+
+==============================================================================
