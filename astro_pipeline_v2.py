@@ -389,7 +389,8 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
       - Clean: Low saturation, no hollowness, no long satellite streaks
       - Gated: Penalize if stars are clearly elongated (TE) or swollen/hollow (OOF)
     """
-    if f.star_count < 1:
+    # A genuine Good frame requires sufficient stars (>= 3). Isolated 1-2 points are hot pixels/cosmic rays.
+    if f.star_count < 2:
         return 0.05
 
     # Gate: Reject swollen OOF stars and hollow donut stars immediately from Good
@@ -405,6 +406,9 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
         (score_low(f.saturated_ratio, 0.010, 0.040), 1.0),
         (score_low(f.mean_hollowness, 0.008, 0.04), 1.2),
     ])
+
+    if f.star_count == 2:
+        base *= 0.35
 
     # Tracking gate: If stars are elongated AND highly angle-consistent -> strong penalty
     if f.elongated_star_count >= 5 and f.elongated_star_ratio > 0.35 and f.elongated_angle_consistency > 0.45:
@@ -558,6 +562,10 @@ def score_over_saturated_v2(f: AstroFeaturesV2) -> float:
         # Anti-TE guard: if parallel trails across many stars exist, it's Tracking Error, not a blooming bar
         elif f.elongated_star_count >= 5 and f.elongated_angle_consistency >= 0.45 and f.mean_aspect_ratio >= 1.50:
             track1 = 0.10
+        # Anti-No_Star / Flare guard: Blooming bars originate from saturated stars.
+        # An empty frame with no stars and low bright area is a dome/sky gradient flare, NOT blooming!
+        elif f.star_count <= 2 and f.bright_area_ratio < 0.001:
+            track1 = 0.05
         else:
             track1 = max(score_high(f.max_projection_diff, 50.0, 75.0), 0.90)
 
@@ -581,6 +589,8 @@ def score_over_saturated_v2(f: AstroFeaturesV2) -> float:
         (score_low(f.sharpness, 500.0, 8000.0), 0.8),
         (score_high(f.max_aspect_ratio, 4.0, 10.0), 0.7),
     ])
+    if f.star_count <= 2 and f.bright_area_ratio < 0.001:
+        base *= 0.10
     return clamp(max(track1, track2, track3, base))
 
 
@@ -601,7 +611,8 @@ def score_no_star_v2(f: AstroFeaturesV2) -> float:
     ])
 
     # Sharp star gate: If real sharp star exists, strongly penalize No_Star
-    if f.valid_profile_count >= 1 and 5.0 < f.median_fwhm < 28.0 and f.sharpness > 6000.0:
+    # Require at least 3 stars with at least 2 valid profiles (isolated single/double points are hot pixels/noise)
+    if f.star_count >= 3 and f.valid_profile_count >= 2 and 5.0 < f.median_fwhm < 28.0 and f.sharpness > 6000.0:
         base *= 0.35
 
     return clamp(base)
