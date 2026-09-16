@@ -337,8 +337,9 @@ async function runBatchInference() {
                 const ruleTopScore = data.rule_based.top_score_pct / 100.0;
                 const isMatch = (data.consensus === 'MATCH');
 
-                const imageElement = await loadImage(item.objectUrl);
-                const localRule = await analyzePredictionWithRules(imageElement, ranked[0]);
+                // Commented out to eliminate redundant in-browser computation latency (results already computed by Python backend)
+                // const imageElement = await loadImage(item.objectUrl);
+                // const localRule = await analyzePredictionWithRules(imageElement, ranked[0]);
 
                 const ruleAnalysis = {
                     available: true,
@@ -366,11 +367,12 @@ async function runBatchInference() {
                 top.ruleScore = ruleTopScore;
                 top.ruleLabel = ruleAnalysis.label;
                 top.ruleTopClass = ruleTop;
-                top.ruleTopScore = ruleTopScore;
-                top.isMatch = isMatch;
+                console.log(`[API SUCCESS] ${item.file.name}: Server processed in ${data.backend_latency_ms || latency.toFixed(0)} ms (Network total: ${latency.toFixed(0)} ms)`);
 
-                result = { item, ranked, latency, ruleAnalysis };
+                const displayLatency = data.backend_latency_ms ? data.backend_latency_ms : latency;
+                result = { item, ranked, latency: displayLatency, ruleAnalysis };
             } catch (err) {
+                console.warn(`[API FAILED] Fallback to in-browser ONNX for ${item.file.name}:`, err);
                 // In-browser ONNX fallback if backend is unavailable
                 const session = await sessionPromise;
                 const inputName = session.inputNames[0];

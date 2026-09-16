@@ -11,6 +11,7 @@ import argparse
 import io
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict
 
@@ -80,6 +81,7 @@ ASTRO_STD = np.array([0.13850915431976318, 0.13850915431976318, 0.13850915431976
 
 @app.route("/api/analyze", methods=["POST"])
 def analyze():
+    t_start = time.time()
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded. Please send image in 'file' field."}), 400
 
@@ -99,7 +101,9 @@ def analyze():
         h, w = gray.shape
 
         # 1. Physics Feature Extraction (V2)
+        _t1 = time.time()
         features: AstroFeaturesV2 = extract_features_v2(gray)
+        _t2 = time.time()
 
         # 2. Physics Rule Scoring (V2)
         rule_scores = score_rules_v2(features)
@@ -124,6 +128,7 @@ def analyze():
             "confidence_pct": 0.0,
             "probabilities_pct": {},
         }
+        _t3 = time.time()
         if onnx_session is not None and input_meta is not None:
             try:
                 rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
@@ -132,6 +137,8 @@ def analyze():
                 input_tensor = np.transpose(norm, (2, 0, 1))[None, ...]
 
                 outputs = onnx_session.run(None, {input_meta.name: input_tensor})
+                _t4 = time.time()
+                print(f"[TIMING] Features: {(_t2-_t1)*1000:.1f}ms | ONNX: {(_t4-_t3)*1000:.1f}ms")
                 raw = np.asarray(outputs[0]).reshape(-1)
                 probs = raw if np.isclose(np.sum(raw), 1.0, atol=1e-3) and np.all(raw >= 0) else softmax(raw)
                 preds = {name: float(probs[i]) for i, name in enumerate(CLASS_NAMES)}
@@ -152,11 +159,14 @@ def analyze():
         if cnn_result["available"]:
             consensus = "MATCH" if top_rule_class == cnn_result["predicted_class"] else "DISAGREE"
 
+        proc_ms = round((time.time() - t_start) * 1000.0, 1)
+
         # 5. Build Response Payload
         response = {
             "filename": uploaded_file.filename,
             "dimensions": {"width": w, "height": h},
             "status": "SUCCESS",
+            "backend_latency_ms": proc_ms,
             "consensus": consensus,
             "rule_based": {
                 "top_class": top_rule_class,

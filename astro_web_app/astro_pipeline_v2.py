@@ -59,6 +59,28 @@ from astro_rule_classifier_new import (
 
 DEFAULT_ONNX_PATH = Path(__file__).parent / "eff_b0_kfold_add_focal_r2.onnx"
 
+# ============================================================================
+# CAMERA & TELESCOPE OPTICAL SPECIFICATIONS
+# ============================================================================
+# Telescope: PlaneWave CDK700 (Focal Length = 4,540 mm)
+# Camera: Andor iKon-M 934 (Pixel Size = 13.0 um, 1024 x 1024)
+TELESCOPE_FOCAL_LENGTH_MM: float = 4540.0
+CAMERA_PIXEL_SIZE_UM: float = 13.0
+DEFAULT_BINNING: float = 1.0
+
+# Pixel Scale Formula: (Pixel Size mm / Focal Length mm) * 206265 * Binning
+# (0.013 / 4540) * 206265 ≈ 0.589975 arcsec/pixel
+PIXEL_SCALE_ARCSEC: float = (
+    (CAMERA_PIXEL_SIZE_UM / 1000.0) / TELESCOPE_FOCAL_LENGTH_MM
+) * 206264.806 * DEFAULT_BINNING
+
+# Physical limits of stars on the sky:
+# Stars are point sources smeared by atmospheric seeing (1.5 - 5.0 arcsec; severe blur <= 15-20 arcsec).
+# Any single object spanning > 20 arcsec (> 34 px diameter, area > 900 px) or broad diffuse emission
+# is an extended astronomical object (Galaxy / Nebula), NOT an individual star.
+MAX_STAR_DIAMETER_ARCSEC: float = 20.0
+MAX_STAR_AREA_CAP_PHYSICS: float = math.pi * ((MAX_STAR_DIAMETER_ARCSEC / PIXEL_SCALE_ARCSEC) / 2.0) ** 2
+
 # Configurable per-class pass/fail thresholds
 DEFAULT_THRESHOLDS_V2: Dict[str, float] = {
     "01_Good": 0.50,
@@ -235,11 +257,12 @@ def extract_features_v2(
     gray: np.ndarray,
     border_margin_pct: float = 0.05,
     min_star_area: float = 5.0,
-    max_star_area_cap: float = 15000.0,
+    max_star_area_cap: Optional[float] = None,
 ) -> AstroFeaturesV2:
     """
     Extract robust astronomical features with Star Selection Filtering:
       - Multi-Scale Star Detection (retains both sharp point sources and swollen/donut stars)
+      - Physical Scale Gating: Exclude non-star extended bodies (Galaxies / Nebulae)
       - Ignores border region (where lens optical aberrations like Coma dominate)
       - Filters out hot pixels / cosmic rays (< 5 px)
     """
@@ -247,8 +270,28 @@ def extract_features_v2(
     total_pixels = float(h * w)
     gray_f = gray.astype(np.float64)
 
+    if max_star_area_cap is None:
+        max_star_area_cap = MAX_STAR_AREA_CAP_PHYSICS
+
     margin_x = int(w * border_margin_pct)
     margin_y = int(h * border_margin_pct)
+
+    # 1. Detect large extended emissions (e.g. Galaxy or diffuse Nebula)
+    # If the diffuse body occupies a notable portion of the field, we exclude knots/gas inside it
+    # so we measure true celestial reference stars in the field.
+    bg_large = cv2.GaussianBlur(gray, (101, 101), 0)
+    bg_med = float(np.median(bg_large))
+    raw_extended_mask = (bg_large > (bg_med + 25.0)).astype(np.uint8)
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(raw_extended_mask)
+    has_large_extended_object = False
+    extended_emission_mask = raw_extended_mask > 0
+    if num_labels > 1:
+        areas = stats[1:, cv2.CC_STAT_AREA]
+        max_idx = int(np.argmax(areas) + 1)
+        max_component_ratio = float(stats[max_idx, cv2.CC_STAT_AREA]) / total_pixels
+        # A true galaxy/diffuse nebula has a single large contiguous core (>= 6.0% of frame)
+        if max_component_ratio >= 0.060:
+            has_large_extended_object = True
 
     contours, bright_area_ratio, saturated_ratio = detect_star_contours_v2(gray)
 
@@ -279,6 +322,11 @@ def extract_features_v2(
         ):
             continue
 
+        cx, cy = int(x + bw / 2), int(y + bh / 2)
+        # Exclude emission knots inside major extended galaxy/nebula bodies
+        if has_large_extended_object and extended_emission_mask[cy, cx]:
+            continue
+
         perimeter = float(cv2.arcLength(contour, True))
         if perimeter <= 0:
             continue
@@ -305,7 +353,12 @@ def extract_features_v2(
         areas.append(area)
         aspect_ratios.append(float(aspect))
         circularities.append(float(circularity))
-        hollownesses.append(contour_hollowness(gray, contour))
+
+        # Hollowness (central dip) is physically valid for optical secondary-mirror donuts (area >= 15 px)
+        if area >= 15.0:
+            hollownesses.append(contour_hollowness(gray, contour))
+        else:
+            hollownesses.append(0.0)
 
         profile = measure_star_profile(gray, contour)
         if profile is not None:
@@ -789,13 +842,113 @@ def run_pipeline_v2(
     }
 
 
+def resolve_true_class(name: str) -> Optional[str]:
+    """
+    Resolve folder or filename to a standard CLASS_NAMES item flexibly:
+    - Exact match: '01_Good' -> '01_Good'
+    - Case-insensitive / whitespace stripped: 'good', 'Good', '01-good'
+    - Short name match: 'out_of_focus', 'oof' -> '02_Out_of_Focus'
+    """
+    cleaned = name.strip().lower().replace("-", "_")
+    for c in CLASS_NAMES:
+        c_lower = c.lower()
+        c_short = c_lower.split("_", 1)[-1]  # 'good', 'out_of_focus', etc.
+        if cleaned == c_lower or cleaned == c_short or cleaned.endswith(c_short) or c_short in cleaned:
+            return c
+    # Check abbreviations
+    if cleaned in ("oof", "off"):
+        return "02_Out_of_Focus"
+    if cleaned in ("te", "tracking"):
+        return "03_Tracking_Error"
+    if cleaned in ("os", "oversat", "over_sat", "saturated"):
+        return "04_Over_Saturated"
+    if cleaned in ("ns", "nostar", "no_star"):
+        return "05_No_Star"
+    if cleaned in ("st", "sat", "satellite"):
+        return "06_Satellite"
+    return None
+
+
 def run_batch_folder_v2(
     folder_path: str | Path,
     output_csv: str | Path,
     onnx_path: Optional[str | Path] = None,
 ) -> None:
-    """Run batch evaluation on a folder of images and export CSV."""
+    """Run batch evaluation on a folder of images (or root dataset directory) and export CSV."""
     fpath = Path(folder_path)
+    if not fpath.exists():
+        print(f"[Error] Directory not found: {fpath}")
+        return
+
+    # Check if this folder contains subdirectories matching CLASS_NAMES (e.g. Dataset_For_Rule_Base)
+    subdirs = [d for d in fpath.iterdir() if d.is_dir() and resolve_true_class(d.name)]
+    if subdirs and not any(fpath.glob("*.png")):
+        print(f"\n[V2 BATCH] Detected dataset root with {len(subdirs)} class folders in '{fpath.name}'...")
+        all_rows = []
+        overall_total = 0
+        overall_rule_correct = 0
+        overall_cnn_correct = 0
+        overall_agreed = 0
+        overall_agreed_correct = 0
+
+        for sdir in sorted(subdirs, key=lambda d: resolve_true_class(d.name) or ""):
+            c_target = resolve_true_class(sdir.name)
+            s_imgs = [p for p in sorted(sdir.glob("*.*")) if p.suffix.lower() in {".png", ".jpg", ".jpeg"}]
+            if not s_imgs:
+                continue
+            c_correct = 0
+            c_cnn_correct = 0
+            for idx, img in enumerate(s_imgs, 1):
+                res = run_pipeline_v2(img, onnx_path=onnx_path)
+                cnn_pred = res["cnn"]["predicted_class"]
+                filter_top = res["filters"]["top_filter_class"]
+                filter_score = res["filters"]["top_filter_score_pct"]
+                is_matched = res["agreement"]["is_matched"]
+
+                if filter_top == c_target:
+                    c_correct += 1
+                    overall_rule_correct += 1
+                if cnn_pred == c_target:
+                    c_cnn_correct += 1
+                    overall_cnn_correct += 1
+                if is_matched:
+                    overall_agreed += 1
+                    if cnn_pred == c_target:
+                        overall_agreed_correct += 1
+
+                all_rows.append({
+                    "image_name": img.name,
+                    "folder": sdir.name,
+                    "true_class": c_target,
+                    "cnn_predicted_class": cnn_pred,
+                    "cnn_confidence_pct": res["cnn"]["confidence_pct"],
+                    "filter_top_class": filter_top,
+                    "filter_top_score_pct": filter_score,
+                    "is_matched": is_matched,
+                    "agreement_status": res["agreement"]["status"],
+                })
+            overall_total += len(s_imgs)
+            print(f"  {c_target:20s}: Rule={c_correct:2d}/{len(s_imgs):2d} ({c_correct/len(s_imgs)*100:5.1f}%) | CNN={c_cnn_correct:2d}/{len(s_imgs):2d} ({c_cnn_correct/len(s_imgs)*100:5.1f}%)")
+
+        out_p = Path(output_csv)
+        try:
+            with open(out_p, "w", newline="", encoding="utf-8-sig") as f:
+                writer = csv.DictWriter(f, fieldnames=list(all_rows[0].keys()))
+                writer.writeheader()
+                writer.writerows(all_rows)
+            print(f"\n[SAVED] CSV written to {out_p.resolve()}")
+        except Exception as e:
+            print(f"\n[WARN] Failed to write CSV: {e}")
+
+        print(f"\n=== OVERALL BATCH RESULTS ===")
+        print(f"Total Images:     {overall_total}")
+        print(f"Rule Accuracy:    {overall_rule_correct}/{overall_total} ({overall_rule_correct/overall_total*100:.2f}%)")
+        print(f"CNN Accuracy:     {overall_cnn_correct}/{overall_total} ({overall_cnn_correct/overall_total*100:.2f}%)")
+        if overall_agreed > 0:
+            print(f"Consensus Match:  {overall_agreed_correct}/{overall_agreed} ({overall_agreed_correct/overall_agreed*100:.2f}%) across {overall_agreed} agreed images\n")
+        return
+
+    # Single folder evaluation
     imgs = [
         p for p in sorted(fpath.glob("*.*"))
         if p.suffix.lower() in {".png", ".jpg", ".jpeg"}
@@ -804,7 +957,12 @@ def run_batch_folder_v2(
         print(f"No images found in {fpath}")
         return
 
-    print(f"\n[V2 BATCH] Evaluating {len(imgs)} images from {fpath.name}...")
+    true_class = resolve_true_class(fpath.name)
+    if not true_class:
+        print(f"[WARNING] โฟลเดอร์ '{fpath.name}' ไม่ตรงกับชื่อคลาสมาตรฐาน: {CLASS_NAMES}")
+        print("          ระบบจะประมวลผลต่อ แต่จะไม่สามารถคิดคะแนน Accuracy ได้")
+
+    print(f"\n[V2 BATCH] Evaluating {len(imgs)} images from {fpath.name} (Resolved True Class: {true_class or 'Unknown'})...")
     rows = []
     correct_count = 0
     match_count = 0
@@ -818,7 +976,7 @@ def run_batch_folder_v2(
 
         if is_matched:
             match_count += 1
-        if filter_top == fpath.name:
+        if true_class and filter_top == true_class:
             correct_count += 1
 
         print(
@@ -830,7 +988,7 @@ def run_batch_folder_v2(
 
         row = {
             "image_name": img.name,
-            "true_class": fpath.name,
+            "true_class": true_class or fpath.name,
             "cnn_predicted_class": cnn_pred,
             "cnn_confidence_pct": res["cnn"]["confidence_pct"],
             "filter_top_class": filter_top,
@@ -859,7 +1017,10 @@ def run_batch_folder_v2(
             writer.writerows(rows)
         print(f"\n[SAVED] '{out_p.name}' กำลังถูกเปิดอยู่ใน Excel จึงบันทึกลง: {alt_p.resolve()} แทน")
 
-    print(f"Filter V2 Accuracy on {fpath.name}: {correct_count}/{len(imgs)} ({correct_count/len(imgs)*100:.1f}%)")
+    if true_class:
+        print(f"Filter V2 Accuracy on {true_class}: {correct_count}/{len(imgs)} ({correct_count/len(imgs)*100:.1f}%)")
+    else:
+        print(f"Filter V2 finished on {fpath.name} (True Class Unknown)")
     print(f"Agreement Rate with CNN: {match_count}/{len(imgs)} ({match_count/len(imgs)*100:.1f}%)\n")
 
 
