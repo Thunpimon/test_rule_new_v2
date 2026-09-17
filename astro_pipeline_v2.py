@@ -391,6 +391,17 @@ def extract_features_v2(
     c_diff = float(np.max(cm) - np.median(cm))
     max_projection_diff = max(r_diff, c_diff)
 
+    # Resolution Normalization: Scale physical pixel metrics relative to standard 1024x1024 frame
+    # (e.g., in a 512x512 image, 1 pixel represents 2x angular scale, so scale=2.0)
+    scale = 1024.0 / max(float(w), float(h))
+    scale_sq = scale * scale
+
+    raw_mean_star_area = float(np.mean(areas)) if areas else 0.0
+    raw_median_fwhm = float(np.median(fwhms)) if fwhms else 0.0
+    raw_mean_fwhm = float(np.mean(fwhms)) if fwhms else 0.0
+    raw_median_hfr = float(np.median(hfrs)) if hfrs else 0.0
+    raw_sharpness = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+
     return AstroFeaturesV2(
         width=w,
         height=h,
@@ -398,12 +409,12 @@ def extract_features_v2(
         std_intensity=float(np.std(gray_f)),
         background_median=float(np.median(gray_f)),
         background_mad=robust_mad(gray_f),
-        sharpness=float(cv2.Laplacian(gray, cv2.CV_64F).var()),
+        sharpness=raw_sharpness * scale_sq,
         saturated_ratio=saturated_ratio,
         bright_area_ratio=bright_area_ratio,
         total_raw_contours=len(contours),
         star_count=star_count,
-        mean_star_area=float(np.mean(areas)) if areas else 0.0,
+        mean_star_area=raw_mean_star_area * scale_sq,
         mean_circularity=float(np.mean(circularities)) if circularities else 0.0,
         median_eccentricity=float(np.median(eccentricities)) if eccentricities else 0.0,
         mean_aspect_ratio=float(np.mean(aspect_ratios)) if aspect_ratios else 0.0,
@@ -411,9 +422,9 @@ def extract_features_v2(
         mean_hollowness=float(np.mean(hollownesses)) if hollownesses else 0.0,
         max_hollowness=max_hollowness,
         valid_profile_count=len(fwhms),
-        median_fwhm=float(np.median(fwhms)) if fwhms else 0.0,
-        mean_fwhm=float(np.mean(fwhms)) if fwhms else 0.0,
-        median_hfr=float(np.median(hfrs)) if hfrs else 0.0,
+        median_fwhm=raw_median_fwhm * scale,
+        mean_fwhm=raw_mean_fwhm * scale,
+        median_hfr=raw_median_hfr * scale,
         elongated_star_count=elongated_count,
         elongated_star_ratio=float(elongated_count / star_count) if star_count else 0.0,
         elongated_angle_consistency=consistency,
@@ -446,8 +457,8 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
     if f.star_count < 2:
         return 0.05
 
-    # Gate: Reject swollen OOF stars and hollow donut stars immediately from Good
-    if f.mean_star_area > 115.0 or f.mean_hollowness > 0.05:
+    # Gate: Reject swollen OOF stars, hollow donut stars, and blurry defocused frames immediately from Good
+    if (f.median_fwhm > 28.0 and f.sharpness < 15000.0) or f.mean_star_area > 115.0 or f.mean_hollowness > 0.05:
         return 0.10
 
     base = weighted_mean([
@@ -478,6 +489,8 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
     sat_penalty = score_low(f.max_streak_length_ratio, 0.20, 0.55)
     if f.max_streak_length_ratio >= 0.18 and f.max_streak_aspect_ratio >= 5.0:
         sat_penalty = min(sat_penalty, 0.15)
+    elif f.max_streak_length_ratio >= 0.12 and f.max_streak_aspect_ratio >= 10.0:
+        sat_penalty = min(sat_penalty, 0.15)
 
     # Over-saturation gate: Blooming columns or normalized saturated frames are not Good
     if f.max_projection_diff >= 50.0 or (f.max_val <= 165.0 and f.background_median <= 25.0 and f.star_count >= 10):
@@ -507,21 +520,27 @@ def score_out_of_focus_v2(f: AstroFeaturesV2) -> float:
     ]) if donut_evidence > 0.0 else 0.0
 
     # Track 2: Swollen Star Signature (Defocus blur must not be long elongated trails)
-    swollen_evidence = score_high(f.mean_star_area, 115.0, 240.0) if f.mean_aspect_ratio < 1.60 else 0.0
+    swollen_evidence = max(
+        score_high(f.mean_star_area, 80.0, 200.0),
+        score_high(f.median_fwhm, 26.0, 38.0)
+    ) if f.mean_aspect_ratio < 1.50 else 0.0
+
     swollen_score = weighted_mean([
         (swollen_evidence, 2.5),
-        (score_high(f.median_fwhm, 32.0, 48.0), 2.0),
-        (score_high(f.median_hfr, 14.0, 24.0), 1.5),
-        (score_low(f.median_eccentricity, 0.30, 0.55), 1.5),
+        (score_high(f.median_fwhm, 26.0, 42.0), 2.0),
+        (score_low(f.sharpness, 3000.0, 15000.0), 1.8),
+        (score_high(f.median_hfr, 12.0, 22.0), 1.5),
+        (score_low(f.median_eccentricity, 0.40, 0.75), 1.2),
         (score_low(f.saturated_ratio, 0.005, 0.030), 1.2),
     ]) if swollen_evidence > 0.0 else 0.0
 
+    # Anti-Tracking gate: Only penalize swollen score; DO NOT penalize true optical donuts!
+    if f.mean_aspect_ratio > 1.40 and f.elongated_angle_consistency > 0.65:
+        swollen_score *= 0.20
+        if donut_evidence < 0.50:
+            donut_score *= 0.20
+
     final_score = max(donut_score, swollen_score)
-
-    # Anti-Tracking gate: If eccentricity is high and stars are stretched in one angle, it's TE, not OOF
-    if f.median_eccentricity > 0.55 and f.elongated_angle_consistency > 0.55:
-        final_score *= 0.20
-
     return clamp(final_score)
 
 
@@ -538,6 +557,10 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
         if f.faint_streak_evidence >= 0.40:
             return clamp(f.faint_streak_evidence)
         return 0.05
+
+    # Anti-OOF guard: Blurry non-parallel stars (FWHM > 28, Sharpness < 15000, Aspect < 1.40, Consistency < 0.65) are OOF, not TE!
+    if f.median_fwhm > 28.0 and f.sharpness < 15000.0 and f.mean_aspect_ratio < 1.40 and f.elongated_angle_consistency < 0.65:
+        return 0.10
 
     # Donut / OOF rejection:
     # A true OOF image has swollen round stars or hollow round donuts.
@@ -590,7 +613,10 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
         score *= 0.20
 
     # Satellite gate: An isolated long streak across the frame is Satellite, not Tracking Error
-    if f.max_streak_length_ratio >= 0.28 and f.max_streak_aspect_ratio >= 14.0 and f.elongated_star_count < 10:
+    is_field_drift = (f.elongated_star_ratio >= 0.40 and f.elongated_angle_consistency >= 0.75)
+    if not is_field_drift and f.max_streak_aspect_ratio >= 14.0 and f.max_streak_length_ratio >= 0.14:
+        score *= 0.30
+    elif f.max_streak_length_ratio >= 0.28 and f.max_streak_aspect_ratio >= 14.0 and f.elongated_star_count < 10:
         score *= 0.15
 
     return clamp(score * count_gate)
@@ -622,8 +648,8 @@ def score_over_saturated_v2(f: AstroFeaturesV2) -> float:
         else:
             track1 = max(score_high(f.max_projection_diff, 50.0, 75.0), 0.90)
 
-    # Anti-OOF guard for Tracks 2 & 3: Hollow donuts or large swollen discs
-    if f.mean_hollowness > 0.04 or (f.mean_star_area > 120.0 and f.median_fwhm > 30.0):
+    # Anti-OOF guard for Tracks 2 & 3: Hollow donuts, large swollen discs, or blurry non-blooming stars
+    if f.mean_hollowness > 0.04 or (f.mean_star_area > 120.0 and f.median_fwhm > 30.0) or (f.median_fwhm > 28.0 and f.sharpness < 15000.0 and f.max_projection_diff < 45.0):
         return clamp(track1 if track1 > 0.0 else 0.05)
 
     # Track 2: Type 2 Normalized Saturation (max <= 165, star_count >= 10, bg <= 25)
@@ -682,9 +708,10 @@ def score_satellite_v2(f: AstroFeaturesV2) -> float:
     if f.streak_count < 1 or f.max_streak_length_ratio < 0.10:
         return 0.02
 
-    # High confidence for distinct long streaks
-    if f.max_streak_length_ratio >= 0.25 and f.max_streak_aspect_ratio >= 10.0:
-        base = max(score_high(f.max_streak_length_ratio, 0.25, 0.65), 0.88)
+    # High confidence for distinct long streaks OR slender streaks
+    if (f.max_streak_length_ratio >= 0.25 and f.max_streak_aspect_ratio >= 10.0) or \
+       (f.max_streak_length_ratio >= 0.12 and f.max_streak_aspect_ratio >= 12.0):
+        base = max(score_high(f.max_streak_length_ratio, 0.12, 0.50), 0.88)
     else:
         base = weighted_mean([
             (score_high(f.streak_count, 0.8, 2.0), 1.5),
