@@ -350,6 +350,9 @@ async function runBatchInference() {
                     features: {
                         starCount: data.physics_metrics.star_count,
                         fwhm: data.physics_metrics.median_fwhm,
+                        fwhmArcsec: data.physics_metrics.median_fwhm_arcsec,
+                        hfr: data.physics_metrics.median_hfr,
+                        hfrArcsec: data.physics_metrics.median_hfr_arcsec,
                         eccentricity: data.physics_metrics.median_eccentricity,
                         circularity: data.physics_metrics.mean_circularity,
                         hollowness: data.physics_metrics.mean_hollowness,
@@ -463,6 +466,9 @@ function buildManifestRows(completedItems) {
             ...CLASS_NAMES.map((className) => `prob_${toColumnName(className)}`),
             'star_count',
             'fwhm_px',
+            'fwhm_arcsec',
+            'hfr_px',
+            'hfr_arcsec',
             'eccentricity',
             'circularity',
             'hollowness',
@@ -493,6 +499,9 @@ function buildManifestRows(completedItems) {
             ...CLASS_NAMES.map((className) => ((confidenceByClass[className] ?? 0) * 100).toFixed(2) + '%'),
             features?.starCount ?? '',
             features?.fwhm?.toFixed(2) ?? '',
+            features?.fwhmArcsec?.toFixed(2) ?? '',
+            features?.hfr?.toFixed(2) ?? '',
+            features?.hfrArcsec?.toFixed(2) ?? '',
             features?.eccentricity?.toFixed(3) ?? '',
             features?.circularity?.toFixed(3) ?? '',
             features?.hollowness?.toFixed(4) ?? '',
@@ -1015,15 +1024,24 @@ function renderModalPrediction(item) {
     if (ruleAnalysis?.features && modalPhysicsSection && modalPhysicsGrid) {
         const m = ruleAnalysis.features;
         modalPhysicsSection.style.display = 'block';
+        const fwhmStr = m.fwhm
+            ? `${m.fwhm.toFixed(1)} px` + (m.fwhmArcsec ? ` <span class="unit-arcsec">(${m.fwhmArcsec.toFixed(1)}″)</span>` : '')
+            : '-';
+        const hfrStr = m.hfr
+            ? `${m.hfr.toFixed(1)} px` + (m.hfrArcsec ? ` <span class="unit-arcsec">(${m.hfrArcsec.toFixed(1)}″)</span>` : '')
+            : '-';
+
         modalPhysicsGrid.innerHTML = `
             <div class="metric-mini-card"><span>Stars</span><strong>${m.starCount ?? '-'}</strong></div>
-            <div class="metric-mini-card"><span>FWHM</span><strong>${m.fwhm ? m.fwhm.toFixed(1) + ' px' : '-'}</strong></div>
+            <div class="metric-mini-card"><span>Pixel Scale</span><strong>0.59″/px</strong></div>
+            <div class="metric-mini-card"><span>FWHM</span><strong>${fwhmStr}</strong></div>
+            <div class="metric-mini-card"><span>HFR</span><strong>${hfrStr}</strong></div>
             <div class="metric-mini-card"><span>Eccentricity</span><strong>${m.eccentricity ? m.eccentricity.toFixed(2) : '-'}</strong></div>
+            <div class="metric-mini-card"><span>Aspect Ratio</span><strong>${m.aspectRatio ? m.aspectRatio.toFixed(2) : '-'}</strong></div>
             <div class="metric-mini-card"><span>Circularity</span><strong>${m.circularity ? m.circularity.toFixed(2) : '-'}</strong></div>
             <div class="metric-mini-card"><span>Hollowness</span><strong>${m.hollowness ? m.hollowness.toFixed(3) : '-'}</strong></div>
             <div class="metric-mini-card"><span>Saturation</span><strong>${formatPercent(m.saturatedRatio)}</strong></div>
             <div class="metric-mini-card"><span>Sharpness</span><strong>${m.sharpness ? m.sharpness.toFixed(0) : '-'}</strong></div>
-            <div class="metric-mini-card"><span>Aspect Ratio</span><strong>${m.aspectRatio ? m.aspectRatio.toFixed(2) : '-'}</strong></div>
         `;
     }
 

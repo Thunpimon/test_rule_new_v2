@@ -134,6 +134,9 @@ class AstroFeaturesV2:
     faint_streak_evidence: float = 0.0
     max_val: float = 255.0
     max_projection_diff: float = 0.0
+    median_fwhm_arcsec: float = 0.0
+    mean_fwhm_arcsec: float = 0.0
+    median_hfr_arcsec: float = 0.0
 
 
 def compute_axial_consistency(angles: List[float]) -> Tuple[float, float]:
@@ -290,7 +293,7 @@ def extract_features_v2(
         max_idx = int(np.argmax(areas) + 1)
         max_component_ratio = float(stats[max_idx, cv2.CC_STAT_AREA]) / total_pixels
         # A true galaxy/diffuse nebula has a single large contiguous core (>= 6.0% of frame)
-        if max_component_ratio >= 0.060:
+        if max_component_ratio >= 0.025:
             has_large_extended_object = True
 
     contours, bright_area_ratio, saturated_ratio = detect_star_contours_v2(gray)
@@ -437,6 +440,9 @@ def extract_features_v2(
         faint_streak_evidence=faint_streak_evidence,
         max_val=max_val,
         max_projection_diff=max_projection_diff,
+        median_fwhm_arcsec=float(raw_median_fwhm * scale * PIXEL_SCALE_ARCSEC),
+        mean_fwhm_arcsec=float(raw_mean_fwhm * scale * PIXEL_SCALE_ARCSEC),
+        median_hfr_arcsec=float(raw_median_hfr * scale * PIXEL_SCALE_ARCSEC),
     )
 
 
