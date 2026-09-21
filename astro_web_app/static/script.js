@@ -287,7 +287,7 @@ async function runBatchInference() {
         delete item.card.dataset.disagree;
         delete item.card.dataset.confidence;
         delete item.card.dataset.latency;
-        item.card.classList.remove('low-confidence');
+        item.card.classList.remove('low-confidence', 'needs-review', 'disagree', 'flagged');
         item.card.querySelector('.latency').classList.remove('slow-latency');
         item.prediction = null;
     });
@@ -347,8 +347,10 @@ async function runBatchInference() {
                     ruleTopScore: ruleTopScore,
                     isMatch: isMatch,
                     consensus: data.consensus,
+                    confidenceFlags: data.confidence_flags ?? { low_confidence: false, needs_review: false, threshold_pct: 60.0 },
                     features: {
                         starCount: data.physics_metrics.star_count,
+                        hasGalaxy: Boolean(data.physics_metrics.has_extended_galaxy),
                         fwhm: data.physics_metrics.median_fwhm,
                         fwhmArcsec: data.physics_metrics.median_fwhm_arcsec,
                         hfr: data.physics_metrics.median_hfr,
@@ -943,18 +945,45 @@ function softmax(values) {
 function renderPrediction({ item, ranked, latency, ruleAnalysis }) {
     const [top] = ranked;
     const card = item.card;
-    const isLowConfidence = top.modelProbability < LOW_CONFIDENCE_THRESHOLD;
+
+    // Use backend-computed flags when available, fall back to frontend threshold
+    const flags = ruleAnalysis?.confidenceFlags ?? {};
+    const isLowConfidence = flags.low_confidence ?? (top.modelProbability < LOW_CONFIDENCE_THRESHOLD);
+    const needsReview = flags.needs_review ?? false;
     const isDisagree = Boolean(ruleAnalysis && !ruleAnalysis.isMatch);
+
     item.prediction = { ranked, latency, ruleAnalysis };
     card.dataset.state = 'done';
     card.dataset.predictedClass = top.className;
     card.dataset.lowConfidence = isLowConfidence ? 'true' : 'false';
     card.dataset.disagree = isDisagree ? 'true' : 'false';
+    card.dataset.needsReview = needsReview ? 'true' : 'false';
     card.dataset.confidence = top.modelProbability.toString();
     card.dataset.latency = latency.toString();
-    card.classList.toggle('low-confidence', isLowConfidence);
+    const isFlagged = isLowConfidence || isDisagree || needsReview;
+    card.classList.toggle('flagged', isFlagged);
     card.querySelector('.top-class').textContent = top.className;
     card.querySelector('.top-confidence').textContent = `${formatPercent(top.modelProbability)} CNN confidence`;
+
+    // Confidence flag badge — single color for all states
+    const flagEl = card.querySelector('.confidence-flag');
+    if (flagEl) {
+        if (needsReview) {
+            flagEl.textContent = '⚠️ Review Required';
+            flagEl.className = 'confidence-flag flagged-badge';
+            flagEl.hidden = false;
+        } else if (isDisagree) {
+            flagEl.textContent = '⚡ CNN ≠ Rule';
+            flagEl.className = 'confidence-flag flagged-badge';
+            flagEl.hidden = false;
+        } else if (isLowConfidence) {
+            flagEl.textContent = '⚠️ Low Confidence';
+            flagEl.className = 'confidence-flag flagged-badge';
+            flagEl.hidden = false;
+        } else {
+            flagEl.hidden = true;
+        }
+    }
 
     const ruleSummaryEl = card.querySelector('.rule-summary');
     if (ruleAnalysis?.ruleTopClass) {
@@ -1009,6 +1038,30 @@ function renderModalPrediction(item) {
     const [top] = ranked;
     modalTopClass.textContent = `${top.className} (${formatPercent(top.modelProbability)})`;
     modalTopConfidence.textContent = `CNN Confidence: ${formatPercent(top.modelProbability)} | Latency: ${latency.toFixed(0)} ms`;
+
+    // Confidence flag in modal
+    const modalConfidenceFlag = document.getElementById('modalConfidenceFlag');
+    const modalConfidenceFlagText = document.getElementById('modalConfidenceFlagText');
+    const flags = ruleAnalysis?.confidenceFlags ?? {};
+    const isModalDisagree = Boolean(ruleAnalysis && !ruleAnalysis.isMatch);
+
+    if (modalConfidenceFlag && modalConfidenceFlagText) {
+        if (flags.needs_review) {
+            modalConfidenceFlagText.textContent = '⚠️ Review Required: Low CNN Confidence + Rule Disagrees';
+            modalConfidenceFlagText.className = 'confidence-flag flagged-badge';
+            modalConfidenceFlag.hidden = false;
+        } else if (isModalDisagree) {
+            modalConfidenceFlagText.textContent = '⚡ CNN ≠ Rule: Model & Physics Engine Disagree';
+            modalConfidenceFlagText.className = 'confidence-flag flagged-badge';
+            modalConfidenceFlag.hidden = false;
+        } else if (flags.low_confidence) {
+            modalConfidenceFlagText.textContent = '⚠️ Low Confidence: CNN Score below 60%';
+            modalConfidenceFlagText.className = 'confidence-flag flagged-badge';
+            modalConfidenceFlag.hidden = false;
+        } else {
+            modalConfidenceFlag.hidden = true;
+        }
+    }
 
     // Rule Prediction & Verdict Card
     if (ruleAnalysis && ruleAnalysis.ruleTopClass && modalRuleVerdictBox) {

@@ -665,22 +665,6 @@ button.secondary:hover:not(:disabled) {
     background: linear-gradient(180deg, #f7fafb, var(--surface-strong));
 }
 
-.confidence-flag {
-    display: none;
-    width: fit-content;
-    margin-top: 4px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: #fff4df;
-    color: var(--warning);
-    font-size: 0.76rem;
-    font-weight: 800;
-}
-
-.result-card.low-confidence .confidence-flag {
-    display: inline-block;
-}
-
 .prediction-main .label,
 .top-confidence,
 .rule-summary,
@@ -741,7 +725,7 @@ button.secondary:hover:not(:disabled) {
     z-index: 1;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    width: min(1180px, 100%);
+    width: min(1280px, calc(100vw - 32px));
     max-height: calc(100vh - 48px);
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -788,7 +772,7 @@ button.secondary:hover:not(:disabled) {
 
 .modal-body {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 350px;
+    grid-template-columns: minmax(0, 1fr) 400px;
     min-height: 0;
     max-height: calc(100vh - 100px);
     overflow: hidden;
@@ -865,11 +849,13 @@ button.secondary:hover:not(:disabled) {
     align-content: start;
     gap: 14px;
     min-width: 0;
+    max-width: 100%;
     padding: 18px;
     border-left: 1px solid rgba(255, 255, 255, 0.12);
     background: #111b2a;
     color: #ffffff;
     overflow-y: auto;
+    overflow-x: hidden;
     overscroll-behavior: contain;
 }
 
@@ -907,6 +893,7 @@ button.secondary:hover:not(:disabled) {
 #modalTopConfidence {
     color: rgba(255, 255, 255, 0.76);
     font-size: 0.9rem;
+    overflow-wrap: break-word;
 }
 
 .modal-rank-list {
@@ -946,6 +933,8 @@ button.secondary:hover:not(:disabled) {
     margin-top: 4px;
     display: grid;
     gap: 4px;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .rule-verdict-box.disagree {
@@ -957,7 +946,9 @@ button.secondary:hover:not(:disabled) {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     font-size: 0.88rem;
+    flex-wrap: wrap;
 }
 
 .rule-verdict-header strong {
@@ -971,6 +962,7 @@ button.secondary:hover:not(:disabled) {
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.04em;
+    flex-shrink: 0;
 }
 
 .rule-verdict-badge.match {
@@ -1007,29 +999,37 @@ button.secondary:hover:not(:disabled) {
 
 .physics-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
+    min-width: 0;
 }
 
 .metric-mini-card {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    padding: 6px 10px;
+    padding: 6px 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 6px;
     font-size: 0.78rem;
+    min-width: 0;
 }
 
 .metric-mini-card span {
     color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
 }
 
 .metric-mini-card strong {
     color: #ffffff;
     font-weight: 600;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .metric-mini-card .unit-arcsec {
@@ -1130,4 +1130,54 @@ button.secondary:hover:not(:disabled) {
         align-items: flex-start;
         flex-direction: column;
     }
+}
+
+/* ── Confidence Flags (unified single color) ───────────────────── */
+
+/* Any flagged state: amber border */
+.result-card.flagged {
+    border-color: #d99a24;
+    box-shadow: 0 0 0 2px rgba(217, 154, 36, 0.22), var(--shadow-soft);
+}
+
+/* Badge base */
+.confidence-flag {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.result-card .confidence-flag {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#modalConfidenceFlag {
+    max-width: 100%;
+}
+
+#modalConfidenceFlag .confidence-flag {
+    white-space: normal;
+    line-height: 1.4;
+    word-break: break-word;
+    display: inline-flex;
+    align-items: center;
+}
+
+.confidence-flag[hidden] {
+    display: none !important;
+}
+
+/* All flag badges — same amber color */
+.confidence-flag.flagged-badge {
+    background: rgba(217, 154, 36, 0.16);
+    color: #f59e0b;
+    border: 1px solid rgba(217, 154, 36, 0.4);
 }

@@ -159,6 +159,11 @@ def analyze():
         if cnn_result["available"]:
             consensus = "MATCH" if top_rule_class == cnn_result["predicted_class"] else "DISAGREE"
 
+        # 4b. Confidence Flags
+        _cnn_conf = cnn_result.get("confidence", 1.0)
+        _low_conf = bool(_cnn_conf < 0.60)
+        _needs_review = bool(_low_conf and consensus == "DISAGREE")
+
         proc_ms = round((time.time() - t_start) * 1000.0, 1)
 
         # 5. Build Response Payload
@@ -168,6 +173,11 @@ def analyze():
             "status": "SUCCESS",
             "backend_latency_ms": proc_ms,
             "consensus": consensus,
+            "confidence_flags": {
+                "low_confidence": _low_conf,
+                "needs_review": _needs_review,
+                "threshold_pct": 60.0,
+            },
             "rule_based": {
                 "top_class": top_rule_class,
                 "top_score_pct": round(top_rule_score * 100.0, 2),
@@ -176,6 +186,7 @@ def analyze():
             "cnn_model": cnn_result,
             "physics_metrics": {
                 "star_count": features.star_count,
+                "has_extended_galaxy": bool(features.has_extended_galaxy),
                 "median_fwhm": round(features.median_fwhm, 2),
                 "mean_fwhm": round(features.mean_fwhm, 2),
                 "median_fwhm_arcsec": round(features.median_fwhm_arcsec, 2),

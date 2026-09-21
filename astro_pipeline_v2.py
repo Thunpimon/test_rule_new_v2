@@ -137,6 +137,7 @@ class AstroFeaturesV2:
     median_fwhm_arcsec: float = 0.0
     mean_fwhm_arcsec: float = 0.0
     median_hfr_arcsec: float = 0.0
+    has_extended_galaxy: bool = False
 
 
 def compute_axial_consistency(angles: List[float]) -> Tuple[float, float]:
@@ -232,6 +233,45 @@ def detect_faint_streak_evidence_v2(gray: np.ndarray) -> float:
         elif cons >= 0.40:
             return 0.52
     return 0.0
+
+
+def check_for_extended_galaxy(gray: np.ndarray) -> bool:
+    """
+    Physical Radial Light Profile Detector:
+    Identifies whether the frame contains an extended astronomical target (Galaxy / Nebula)
+    by measuring radial photon distribution (r_half >= 30px) on the largest candidate sources.
+    """
+    h, w = gray.shape
+    bg_corner = float(np.median(gray[15:85, 15:85]))
+    blur = cv2.GaussianBlur(gray, (51, 51), 0)
+    diff = cv2.subtract(blur, int(bg_corner))
+    max_val = float(np.max(diff))
+    if max_val < 35.0:
+        return False
+    _, _, _, max_loc = cv2.minMaxLoc(diff)
+    cx, cy = max_loc
+    if cx < 80 or cx > (w - 80) or cy < 80 or cy > (h - 80):
+        return False
+    radii = [0, 4, 8, 14, 20, 30, 45, 60]
+    intensities = []
+    for r in radii:
+        if r == 0:
+            intensities.append(max_val)
+        else:
+            y, x = np.ogrid[-r:r+1, -r:r+1]
+            d = np.sqrt(x**2 + y**2)
+            ring = (d >= r - 2.0) & (d <= r + 2.0)
+            sub = gray[cy-r:cy+r+1, cx-r:cx+r+1]
+            val = float(np.mean(sub[ring])) - bg_corner if np.any(ring) else 0.0
+            intensities.append(max(val, 0.0))
+    peak = intensities[0]
+    r_half = 60
+    for i, r in enumerate(radii):
+        if intensities[i] <= 0.50 * peak:
+            r_half = r
+            break
+    is_galaxy = (r_half >= 30 and intensities[6] >= 0.20 * peak)
+    return is_galaxy
 
 
 def detect_star_contours_v2(gray: np.ndarray) -> Tuple[List[np.ndarray], float, float]:
@@ -443,6 +483,7 @@ def extract_features_v2(
         median_fwhm_arcsec=float(raw_median_fwhm * scale * PIXEL_SCALE_ARCSEC),
         mean_fwhm_arcsec=float(raw_mean_fwhm * scale * PIXEL_SCALE_ARCSEC),
         median_hfr_arcsec=float(raw_median_hfr * scale * PIXEL_SCALE_ARCSEC),
+        has_extended_galaxy=check_for_extended_galaxy(gray),
     )
 
 
@@ -482,7 +523,10 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
 
     # Tracking gate: If stars are elongated AND highly angle-consistent -> strong penalty
     if f.elongated_star_count >= 5 and f.elongated_star_ratio > 0.35 and f.elongated_angle_consistency > 0.45:
-        te_penalty = 0.25
+        if f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.35:
+            te_penalty = 1.0
+        else:
+            te_penalty = 0.25
     elif f.elongated_star_count >= 20 and f.elongated_star_ratio >= 0.30 and f.elongated_angle_consistency >= 0.30 and f.mean_aspect_ratio >= 1.32:
         # Dense star field with >= 20 elongated stars in parallel (e.g. 260512N494_1_1)
         te_penalty = 0.25
@@ -625,7 +669,10 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
     elif f.max_streak_length_ratio >= 0.28 and f.max_streak_aspect_ratio >= 14.0 and f.elongated_star_count < 10:
         score *= 0.15
 
-    return clamp(score * count_gate)
+    final_score = clamp(score * count_gate)
+    if f.has_extended_galaxy and f.mean_aspect_ratio < 1.40 and f.median_eccentricity < 0.35:
+        final_score = min(final_score, 0.35)
+    return final_score
 
 
 def score_over_saturated_v2(f: AstroFeaturesV2) -> float:

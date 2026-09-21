@@ -127,6 +127,9 @@
                         <span class="modal-label">CNN Prediction (Primary)</span>
                         <strong id="modalTopClass">-</strong>
                         <span id="modalTopConfidence">-</span>
+                        <div id="modalConfidenceFlag" hidden style="margin-top:6px;">
+                            <span id="modalConfidenceFlagText" class="confidence-flag"></span>
+                        </div>
                     </div>
                     <div id="modalRuleVerdictBox" class="rule-verdict-box" style="display: none;">
                         <div class="rule-verdict-header">
@@ -164,7 +167,7 @@
                     <strong class="top-class">-</strong>
                     <span class="top-confidence">-</span>
                     <span class="rule-summary">Rule check pending</span>
-                    <span class="confidence-flag">Low confidence</span>
+                    <span class="confidence-flag" hidden>Low confidence</span>
                 </div>
                 <div class="meta-row">
                     <span class="latency">-</span>
