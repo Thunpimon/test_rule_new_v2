@@ -138,6 +138,7 @@ class AstroFeaturesV2:
     mean_fwhm_arcsec: float = 0.0
     median_hfr_arcsec: float = 0.0
     has_extended_galaxy: bool = False
+    has_comet_tail: bool = False
 
 
 def compute_axial_consistency(angles: List[float]) -> Tuple[float, float]:
@@ -272,6 +273,77 @@ def check_for_extended_galaxy(gray: np.ndarray) -> bool:
             break
     is_galaxy = (r_half >= 30 and intensities[6] >= 0.20 * peak)
     return is_galaxy
+
+
+def check_comet_tail_guarded(gray: np.ndarray, fwhm: float, star_area: float, max_hollowness: float, bg_med: float) -> bool:
+    """
+    Comet Tail Rule (กฎดาวหางหยดน้ำ):
+    Detects un-directional downward motion drift on bright stars,
+    guarded strictly against Out_of_Focus swollen/donut stars and CCD blooming.
+    """
+    # Anti-OOF guard: Swollen or donut stars cannot be Comet Tail
+    if (fwhm > 28.0 and star_area > 120.0) or max_hollowness > 0.15:
+        return False
+
+    # Guard against dark frame focusing spikes
+    if bg_med < 25.0:
+        return False
+
+    # Guard against massive core saturation (>600 px)
+    thresh_sat = (gray >= 254).astype(np.uint8)
+    num_sat, _, stats_sat, _ = cv2.connectedComponentsWithStats(thresh_sat)
+    if num_sat > 1:
+        max_blob_area = np.max(stats_sat[1:, cv2.CC_STAT_AREA])
+        if max_blob_area >= 600:
+            return False
+
+    h, w = gray.shape
+    thresh = bg_med + 25.0
+
+    col_sums = np.sum(gray.astype(np.float32), axis=0)
+    spikes = np.where(col_sums > np.median(col_sums) + 12000)[0]
+    if len(spikes) == 0:
+        return False
+
+    streaks = []
+    curr = [spikes[0]]
+    for s in spikes[1:]:
+        if s == curr[-1] + 1:
+            curr.append(s)
+        else:
+            streaks.append(int(np.mean(curr)))
+            curr = [s]
+    streaks.append(int(np.mean(curr)))
+
+    down_streak_stars = []
+
+    for x in streaks:
+        col = gray[:, x]
+        pk_y = int(np.argmax(col))
+        if col[pk_y] < 210 or pk_y > h * 0.75:
+            continue
+
+        down_streak = 0
+        for y in range(pk_y + 8, min(h - 5, pk_y + 250)):
+            if col[y] >= thresh:
+                down_streak += 1
+            else:
+                break
+
+        up_streak = 0
+        for y in range(pk_y - 8, max(5, pk_y - 250), -1):
+            if col[y] >= thresh:
+                up_streak += 1
+            else:
+                break
+
+        if down_streak >= 35 and down_streak >= 3.0 * max(up_streak, 4):
+            down_streak_stars.append(x)
+
+    if len(down_streak_stars) >= 2 and (max(down_streak_stars) - min(down_streak_stars)) >= 60:
+        return True
+
+    return False
 
 
 def detect_star_contours_v2(gray: np.ndarray) -> Tuple[List[np.ndarray], float, float]:
@@ -484,6 +556,7 @@ def extract_features_v2(
         mean_fwhm_arcsec=float(raw_mean_fwhm * scale * PIXEL_SCALE_ARCSEC),
         median_hfr_arcsec=float(raw_median_hfr * scale * PIXEL_SCALE_ARCSEC),
         has_extended_galaxy=check_for_extended_galaxy(gray),
+        has_comet_tail=check_comet_tail_guarded(gray, raw_median_fwhm * scale, raw_mean_star_area * scale_sq, max_hollowness, float(np.median(gray_f))),
     )
 
 
@@ -522,7 +595,16 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
         base *= 0.35
 
     # Tracking gate: If stars are elongated AND highly angle-consistent -> strong penalty
-    if f.elongated_star_count >= 5 and f.elongated_star_ratio > 0.35 and f.elongated_angle_consistency > 0.45:
+    has_unmistakable_drift = (
+        f.has_extended_galaxy
+        and f.elongated_star_count >= 15
+        and f.elongated_star_ratio >= 0.45
+        and f.elongated_angle_consistency >= 0.70
+    )
+
+    if f.has_comet_tail or has_unmistakable_drift:
+        te_penalty = 0.20
+    elif f.elongated_star_count >= 5 and f.elongated_star_ratio > 0.35 and f.elongated_angle_consistency > 0.45:
         if f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.40:
             te_penalty = 1.0
         else:
@@ -673,7 +755,19 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
         score *= 0.15
 
     final_score = clamp(score * count_gate)
-    if f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.40:
+
+    has_unmistakable_drift = (
+        f.has_extended_galaxy
+        and f.elongated_star_count >= 15
+        and f.elongated_star_ratio >= 0.45
+        and f.elongated_angle_consistency >= 0.70
+    )
+
+    if f.has_comet_tail:
+        final_score = max(final_score, 0.95)
+    elif has_unmistakable_drift:
+        final_score = max(final_score, 0.85)
+    elif f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.40:
         final_score = min(final_score, 0.35)
     return final_score
 
@@ -687,6 +781,9 @@ def score_over_saturated_v2(f: AstroFeaturesV2) -> float:
       - Track 3: High contrast dark frames with saturated cores/spikes (bg_med <= 25.0, max_val >= 250.0, saturated_ratio >= 0.003, fwhm < 25.0).
       - Anti-OOF guard: Hollow donuts or huge swollen discs are OOF, not Over_Saturated.
     """
+    # Comet tail guard: Asymmetric downward motion drift is Tracking Error, not Over Saturated blooming
+    if f.has_comet_tail:
+        return 0.15
     # Track 1: Massive Blooming Bar / Column (projection diff >= 50)
     track1 = 0.0
     if f.max_projection_diff >= 50.0:
