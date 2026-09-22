@@ -523,13 +523,16 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
 
     # Tracking gate: If stars are elongated AND highly angle-consistent -> strong penalty
     if f.elongated_star_count >= 5 and f.elongated_star_ratio > 0.35 and f.elongated_angle_consistency > 0.45:
-        if f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.35:
+        if f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.40:
             te_penalty = 1.0
         else:
             te_penalty = 0.25
     elif f.elongated_star_count >= 20 and f.elongated_star_ratio >= 0.30 and f.elongated_angle_consistency >= 0.30 and f.mean_aspect_ratio >= 1.32:
         # Dense star field with >= 20 elongated stars in parallel (e.g. 260512N494_1_1)
-        te_penalty = 0.25
+        if f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.40:
+            te_penalty = 1.0
+        else:
+            te_penalty = 0.25
     elif f.elongated_star_count >= 5 and f.mean_aspect_ratio > 1.48:
         te_penalty = 0.30
     else:
@@ -670,7 +673,7 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
         score *= 0.15
 
     final_score = clamp(score * count_gate)
-    if f.has_extended_galaxy and f.mean_aspect_ratio < 1.40 and f.median_eccentricity < 0.35:
+    if f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.40:
         final_score = min(final_score, 0.35)
     return final_score
 
