@@ -341,10 +341,23 @@ async function runBatchInference() {
                 // const imageElement = await loadImage(item.objectUrl);
                 // const localRule = await analyzePredictionWithRules(imageElement, ranked[0]);
 
+                const ruleScoresData = data.rule_based.scores || {};
+                const ruleNormMap = {};
+                const ruleRawMap = {};
+                for (const [key, val] of Object.entries(ruleScoresData)) {
+                    const sName = CLASS_MAP[key] || key;
+                    ruleNormMap[sName] = (val.norm_score_pct !== undefined ? val.norm_score_pct : (val.norm_score * 100)) / 100.0;
+                    ruleRawMap[sName] = val.score;
+                }
+
                 const ruleAnalysis = {
                     available: true,
                     ruleTopClass: ruleTop,
                     ruleTopScore: ruleTopScore,
+                    ruleTopNormScore: (data.rule_based.top_norm_score_pct || 0) / 100.0,
+                    ruleNormMap: ruleNormMap,
+                    ruleRawMap: ruleRawMap,
+                    ruleScoresData: ruleScoresData,
                     isMatch: isMatch,
                     consensus: data.consensus,
                     confidenceFlags: data.confidence_flags ?? { low_confidence: false, needs_review: false, threshold_pct: 60.0 },
@@ -1098,15 +1111,83 @@ function renderModalPrediction(item) {
         `;
     }
 
-    modalRankList.innerHTML = ranked.map((prediction, index) => `
-        <div class="rank-row">
-            <span>${index + 1}. ${prediction.className}</span>
-            <strong>${formatPercent(prediction.modelProbability)}</strong>
-            <div class="bar" aria-hidden="true">
-                <i style="width: ${Math.max(prediction.modelProbability * 100, 2)}%"></i>
+    // Side-by-Side Comparison: 2 Boxes (CNN 100% vs Physics Rule 100% Norm) with Fixed 1:1 Canonical Order
+    const CANONICAL_CLASSES = [
+        'Good',
+        'Out of Focus',
+        'Tracking Error',
+        'Over Saturated',
+        'No Star',
+        'Satellite'
+    ];
+
+    const cnnProbMap = {};
+    if (ranked) {
+        ranked.forEach(r => {
+            cnnProbMap[r.className] = r.modelProbability;
+        });
+    }
+
+    const ruleNormMap = ruleAnalysis?.ruleNormMap || {};
+    const ruleRawMap = ruleAnalysis?.ruleRawMap || {};
+    const topCnnClass = ranked?.[0]?.className;
+    const topRuleClass = ruleAnalysis?.ruleTopClass;
+
+    const compHtml = `
+        <div class="comp-container">
+            <!-- Left Box: CNN Model -->
+            <div class="comp-box cnn-box">
+                <div class="comp-box-header">
+                    <span class="comp-title"><i class="comp-dot cnn-dot"></i> CNN Model</span>
+                    <span class="comp-badge cnn-badge">100% Total</span>
+                </div>
+                <div class="comp-rows">
+                    ${CANONICAL_CLASSES.map((cName) => {
+                        const cnnVal = cnnProbMap[cName] ?? 0;
+                        const cnnPct = cnnVal * 100;
+                        const isTop = (cName === topCnnClass);
+                        return `
+                            <div class="comp-row ${isTop ? 'is-top' : ''}" title="CNN: ${cName} (${formatPercent(cnnVal)})">
+                                <span class="comp-name">${cName}</span>
+                                <div class="comp-bar-cell">
+                                    <div class="bar cnn-bar"><i style="width: ${Math.max(cnnPct, 1.5)}%"></i></div>
+                                    <strong class="comp-val">${formatPercent(cnnVal)}</strong>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Right Box: Physics Rule -->
+            <div class="comp-box rule-box">
+                <div class="comp-box-header">
+                    <span class="comp-title"><i class="comp-dot rule-dot"></i> Physics Rule</span>
+                    <span class="comp-badge rule-badge">Norm 100%</span>
+                </div>
+                <div class="comp-rows">
+                    ${CANONICAL_CLASSES.map((cName) => {
+                        const ruleNormVal = ruleNormMap[cName] ?? 0;
+                        const ruleNormPct = ruleNormVal * 100;
+                        const ruleRawVal = ruleRawMap[cName] ?? 0;
+                        const ruleRawPct = ruleRawVal * 100;
+                        const isTop = (cName === topRuleClass);
+                        return `
+                            <div class="comp-row ${isTop ? 'is-top' : ''}" title="Physics Rule: ${cName} (${formatPercent(ruleNormVal)}) | Raw Score: ${ruleRawPct.toFixed(1)}%">
+                                <span class="comp-name">${cName}</span>
+                                <div class="comp-bar-cell">
+                                    <div class="bar rule-bar"><i style="width: ${Math.max(ruleNormPct, 1.5)}%"></i></div>
+                                    <strong class="comp-val">${formatPercent(ruleNormVal)}</strong>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
             </div>
         </div>
-    `).join('');
+    `;
+
+    modalRankList.innerHTML = compHtml;
 }
 
 function updateMetrics() {

@@ -275,23 +275,43 @@ def check_for_extended_galaxy(gray: np.ndarray) -> bool:
     return is_galaxy
 
 
-def check_comet_tail_guarded(gray: np.ndarray, fwhm: float, star_area: float, max_hollowness: float, bg_med: float) -> bool:
+def check_comet_tail_guarded(gray: np.ndarray, fwhm: float, star_area: float, mean_hollowness: float, bg_med: float) -> bool:
     """
     Comet Tail Rule (กฎดาวหางหยดน้ำ):
     Detects un-directional downward motion drift on bright stars,
     guarded strictly against Out_of_Focus swollen/donut stars and CCD blooming.
     """
     # Anti-OOF guard: Swollen or donut stars cannot be Comet Tail
-    if (fwhm > 28.0 and star_area > 120.0) or max_hollowness > 0.15:
+    if (fwhm > 28.0 and star_area > 120.0) or mean_hollowness > 0.04:
         return False
 
     # Guard against dark frame focusing spikes
     if bg_med < 25.0:
         return False
 
-    # Guard against massive core saturation (>600 px)
+    # 1. Guard against massive core saturation (>600 px) unless it is a slender vertical comet tail
     thresh_sat = (gray >= 254).astype(np.uint8)
     num_sat, _, stats_sat, _ = cv2.connectedComponentsWithStats(thresh_sat)
+    if num_sat > 1:
+        for i in range(1, num_sat):
+            bw = stats_sat[i, cv2.CC_STAT_WIDTH]
+            bh = stats_sat[i, cv2.CC_STAT_HEIGHT]
+            aspect = bh / max(bw, 1)
+            if bh >= 150 and aspect >= 3.8 and bh < 900:
+                return True
+
+    # 2. Bright slender drift tail (single-streak support, e.g. 2607027VZF_1597)
+    thresh_b = (gray >= 195).astype(np.uint8)
+    num_b, _, stats_b, _ = cv2.connectedComponentsWithStats(thresh_b)
+    if num_b > 1:
+        for i in range(1, num_b):
+            bw = stats_b[i, cv2.CC_STAT_WIDTH]
+            bh = stats_b[i, cv2.CC_STAT_HEIGHT]
+            aspect = bh / max(bw, 1)
+            if bh >= 115 and aspect >= 5.0 and bh < 300:
+                return True
+
+    # 3. Guard against massive round core saturation (>= 600 px)
     if num_sat > 1:
         max_blob_area = np.max(stats_sat[1:, cv2.CC_STAT_AREA])
         if max_blob_area >= 600:
@@ -399,14 +419,15 @@ def extract_features_v2(
     raw_extended_mask = (bg_large > (bg_med + 25.0)).astype(np.uint8)
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(raw_extended_mask)
     has_large_extended_object = False
-    extended_emission_mask = raw_extended_mask > 0
+    extended_emission_mask = np.zeros((h, w), dtype=bool)
     if num_labels > 1:
         areas = stats[1:, cv2.CC_STAT_AREA]
         max_idx = int(np.argmax(areas) + 1)
         max_component_ratio = float(stats[max_idx, cv2.CC_STAT_AREA]) / total_pixels
         # A true galaxy/diffuse nebula has a single large contiguous core (>= 6.0% of frame)
-        if max_component_ratio >= 0.025:
+        if max_component_ratio >= 0.060:
             has_large_extended_object = True
+            extended_emission_mask = (labels == max_idx)
 
     contours, bright_area_ratio, saturated_ratio = detect_star_contours_v2(gray)
 
@@ -556,7 +577,7 @@ def extract_features_v2(
         mean_fwhm_arcsec=float(raw_mean_fwhm * scale * PIXEL_SCALE_ARCSEC),
         median_hfr_arcsec=float(raw_median_hfr * scale * PIXEL_SCALE_ARCSEC),
         has_extended_galaxy=check_for_extended_galaxy(gray),
-        has_comet_tail=check_comet_tail_guarded(gray, raw_median_fwhm * scale, raw_mean_star_area * scale_sq, max_hollowness, float(np.median(gray_f))),
+        has_comet_tail=check_comet_tail_guarded(gray, raw_median_fwhm * scale, raw_mean_star_area * scale_sq, float(np.mean(hollownesses)) if hollownesses else 0.0, float(np.median(gray_f))),
     )
 
 
@@ -580,11 +601,13 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
     # Gate: Reject swollen OOF stars, hollow donut stars, and blurry defocused frames immediately from Good
     if (f.median_fwhm > 28.0 and f.sharpness < 15000.0) or f.mean_star_area > 115.0 or f.mean_hollowness > 0.05:
         return 0.10
+    if f.median_fwhm > 33.0 and f.mean_hollowness > 0.035:
+        return 0.10
 
     base = weighted_mean([
-        (score_low(f.median_fwhm, 17.0, 32.0), 1.8),
+        (score_low(f.median_fwhm, 18.0, 35.0), 1.8),
         (score_low(f.median_eccentricity, 0.38, 0.58), 1.6),
-        (score_high(f.mean_circularity, 0.60, 0.85), 1.2),
+        (score_high(f.mean_circularity, 0.52, 0.78), 1.2),
         (score_high(f.sharpness, 6000.0, 35000.0), 1.5),
         (score_high(f.star_count, 3, 25), 0.8),
         (score_low(f.saturated_ratio, 0.010, 0.040), 1.0),
@@ -594,12 +617,18 @@ def score_good_v2(f: AstroFeaturesV2) -> float:
     if f.star_count == 2:
         base *= 0.35
 
+    # Clean frame booster: Tight, sharp, round, non-hollow stars with no defects
+    if f.median_fwhm <= 30.0 and f.mean_star_area <= 80.0 and f.mean_hollowness <= 0.02 and f.median_eccentricity <= 0.40 and f.saturated_ratio <= 0.02:
+        base = min(1.0, base * 1.18)
+
     # Tracking gate: If stars are elongated AND highly angle-consistent -> strong penalty
     has_unmistakable_drift = (
         f.has_extended_galaxy
-        and f.elongated_star_count >= 15
-        and f.elongated_star_ratio >= 0.45
-        and f.elongated_angle_consistency >= 0.70
+        and (
+            (f.elongated_star_count >= 15 and f.elongated_star_ratio >= 0.45 and f.elongated_angle_consistency >= 0.70)
+            or (f.elongated_star_count >= 20 and f.elongated_star_ratio >= 0.35 and f.elongated_angle_consistency >= 0.70)
+            or (f.elongated_star_count >= 12 and f.elongated_star_ratio >= 0.35 and f.elongated_angle_consistency >= 0.55 and f.mean_aspect_ratio >= 1.33)
+        )
     )
 
     if f.has_comet_tail or has_unmistakable_drift:
@@ -655,11 +684,16 @@ def score_out_of_focus_v2(f: AstroFeaturesV2) -> float:
     ]) if donut_evidence > 0.0 else 0.0
 
     # Track 2: Swollen Star Signature (Defocus blur must not be long elongated trails)
-    swollen_evidence = max(
-        score_high(f.mean_star_area, 80.0, 200.0),
-        score_high(f.median_fwhm, 26.0, 38.0)
-    ) if f.mean_aspect_ratio < 1.50 else 0.0
-
+    is_swollen_aspect = (
+        f.mean_aspect_ratio < 1.55 
+        or (f.median_fwhm > 38.0 and f.mean_aspect_ratio < 1.65)
+        or (f.mean_aspect_ratio < 1.65 and f.elongated_angle_consistency < 0.35)
+    )
+    swollen_evidence = (
+        max(score_high(f.mean_star_area, 80.0, 200.0), score_high(f.median_fwhm, 26.0, 38.0))
+        if is_swollen_aspect
+        else 0.0
+    )
     swollen_score = weighted_mean([
         (swollen_evidence, 2.5),
         (score_high(f.median_fwhm, 26.0, 42.0), 2.0),
@@ -740,8 +774,11 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
         (cons_score, 2.0),
     ])
 
-    # Star count gate (needs at least 3 elongated stars to form consensus)
-    count_gate = score_high(f.elongated_star_count, 2, 6)
+    # Star count gate: relaxed if stars are clearly long parallel trails (mean aspect >= 1.8 and consistency >= 0.50)
+    if f.mean_aspect_ratio >= 1.8 and f.elongated_angle_consistency >= 0.50:
+        count_gate = score_high(f.elongated_star_count, 1, 4)
+    else:
+        count_gate = score_high(f.elongated_star_count, 2, 6)
 
     # Hard rejection if angles are completely random (< 0.20) and trails are not long (< 1.35)
     if f.elongated_angle_consistency < 0.20 and f.mean_aspect_ratio < 1.35:
@@ -758,9 +795,11 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
 
     has_unmistakable_drift = (
         f.has_extended_galaxy
-        and f.elongated_star_count >= 15
-        and f.elongated_star_ratio >= 0.45
-        and f.elongated_angle_consistency >= 0.70
+        and (
+            (f.elongated_star_count >= 15 and f.elongated_star_ratio >= 0.45 and f.elongated_angle_consistency >= 0.70)
+            or (f.elongated_star_count >= 20 and f.elongated_star_ratio >= 0.35 and f.elongated_angle_consistency >= 0.70)
+            or (f.elongated_star_count >= 12 and f.elongated_star_ratio >= 0.35 and f.elongated_angle_consistency >= 0.55 and f.mean_aspect_ratio >= 1.33)
+        )
     )
 
     if f.has_comet_tail:
@@ -769,6 +808,8 @@ def score_tracking_error_v2(f: AstroFeaturesV2) -> float:
         final_score = max(final_score, 0.85)
     elif f.has_extended_galaxy and f.mean_aspect_ratio < 1.45 and f.median_eccentricity < 0.40:
         final_score = min(final_score, 0.35)
+    elif not f.has_comet_tail and f.mean_aspect_ratio < 1.35 and f.median_eccentricity < 0.38 and f.elongated_angle_consistency < 0.40:
+        final_score = min(final_score, 0.05)
     return final_score
 
 
@@ -798,11 +839,14 @@ def score_over_saturated_v2(f: AstroFeaturesV2) -> float:
         # An empty frame with no stars and low bright area is a dome/sky gradient flare, NOT blooming!
         elif f.star_count <= 2 and f.bright_area_ratio < 0.001:
             track1 = 0.05
+        # Anti-OOF guard: Heavily swollen discs or hollow donuts with edge glow are OOF, NOT blooming bars!
+        elif (f.median_fwhm > 35.0 and f.mean_star_area > 150.0) or (f.median_fwhm > 33.0 and f.mean_hollowness > 0.035):
+            track1 = 0.05
         else:
             track1 = max(score_high(f.max_projection_diff, 50.0, 75.0), 0.90)
 
     # Anti-OOF guard for Tracks 2 & 3: Hollow donuts, large swollen discs, or blurry non-blooming stars
-    if f.mean_hollowness > 0.04 or (f.mean_star_area > 120.0 and f.median_fwhm > 30.0) or (f.median_fwhm > 28.0 and f.sharpness < 15000.0 and f.max_projection_diff < 45.0):
+    if f.mean_hollowness > 0.04 or (f.mean_star_area > 120.0 and f.median_fwhm > 30.0) or (f.median_fwhm > 30.0 and f.sharpness < 15000.0 and f.max_projection_diff < 45.0):
         return clamp(track1 if track1 > 0.0 else 0.05)
 
     # Track 2: Type 2 Normalized Saturation (max <= 165, star_count >= 10, bg <= 25)

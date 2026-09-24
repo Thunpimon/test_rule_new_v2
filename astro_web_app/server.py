@@ -110,12 +110,22 @@ def analyze():
         top_rule_class = max(rule_scores, key=rule_scores.get)
         top_rule_score = rule_scores[top_rule_class]
 
+        # Calculate normalized rule scores (scaled to sum to 100%, like CNN softmax)
+        total_rule_sum = sum(rule_scores.values())
+        if total_rule_sum > 1e-6:
+            rule_scores_norm = {k: v / total_rule_sum for k, v in rule_scores.items()}
+        else:
+            rule_scores_norm = {k: 1.0 / len(rule_scores) for k, v in rule_scores.items()}
+
         rule_details = {}
         for cname, sc in rule_scores.items():
             th = DEFAULT_THRESHOLDS_V2.get(cname, 0.50)
+            norm_sc = rule_scores_norm[cname]
             rule_details[cname] = {
                 "score": round(float(sc), 4),
                 "score_pct": round(float(sc) * 100.0, 2),
+                "norm_score": round(float(norm_sc), 4),
+                "norm_score_pct": round(float(norm_sc) * 100.0, 2),
                 "threshold": th,
                 "threshold_pct": round(th * 100.0, 1),
                 "passed": bool(sc >= th),
@@ -181,7 +191,9 @@ def analyze():
             "rule_based": {
                 "top_class": top_rule_class,
                 "top_score_pct": round(top_rule_score * 100.0, 2),
+                "top_norm_score_pct": round(float(rule_scores_norm[top_rule_class]) * 100.0, 2),
                 "scores": rule_details,
+                "normalized_scores_pct": {k: round(float(rule_scores_norm[k]) * 100.0, 2) for k in CLASS_NAMES},
             },
             "cnn_model": cnn_result,
             "physics_metrics": {
